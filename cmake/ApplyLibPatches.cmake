@@ -1,7 +1,9 @@
 # Local fixes to the upstream submodules, kept as patch files in
 # lib-patches/<submodule>/ and applied to the submodule's working tree at
 # configure time (each only once: skipped when it already reverse-applies).
-find_package(Git REQUIRED)
+if (NOT GIT_EXECUTABLE)
+    find_program(GIT_EXECUTABLE git REQUIRED)
+endif()
 
 function(bz_apply_lib_patches submodule)
     file(GLOB patches "${CMAKE_SOURCE_DIR}/lib-patches/${submodule}/*.patch")
