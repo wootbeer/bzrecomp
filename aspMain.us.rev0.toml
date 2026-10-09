@@ -1,0 +1,18 @@
+# Battlezone's RSP audio microcode: libultra's standard aspMain (the game uses
+# the standard audio library, alSynNew/alAudioFrame), recompiled by RSPRecomp.
+#
+# Located from the game's M_AUDTASK setup (func_80034CA0 area): ucode text
+# 0x8003B420, data 0x8006BD80 (size 0x800). Boot-segment ROM offset =
+# vram - 0x80027400. Text runs to the next CPU function, 0x8003C240.
+text_offset = 0x14020
+text_size = 0xE20
+text_address = 0x04001080
+rom_file_path = "Battlezone - Rise of the Black Dogs (USA).z64"
+output_file_path = "rsp/aspMain.cpp"
+output_function_name = "aspMain"
+extra_indirect_branch_targets = [
+    # Command dispatch table: ucode data halfwords 8-23 (the first eight are
+    # constants 0, 1, 2, 0xFFFF, 0x20, 0x800, 0x7FFF, 0x4000).
+    0x1118, 0x1470, 0x11DC, 0x1B38, 0x1214, 0x187C, 0x1254, 0x12D0,
+    0x12EC, 0x1328, 0x140C, 0x1294, 0x1E24, 0x138C, 0x170C, 0x144C,
+]

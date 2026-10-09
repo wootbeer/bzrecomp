@@ -1,0 +1,28 @@
+diff --git a/recompui/include/recompui/renderer.h b/recompui/include/recompui/renderer.h
+index 33f79ab..371e091 100644
+--- a/recompui/include/recompui/renderer.h
++++ b/recompui/include/recompui/renderer.h
+@@ -27,6 +27,7 @@ namespace recompui {
+ 
+             void enable_instant_present() override;
+             void send_dl(const OSTask *task) override;
++            void send_rdp_list(uint32_t start, uint32_t end) override;
+             void send_dummy_workload(uint32_t fb_address) override;
+             void update_screen() override;
+             void shutdown() override;
+diff --git a/recompui/src/renderer/rt64_render_context.cpp b/recompui/src/renderer/rt64_render_context.cpp
+index a7954c7..1bb6883 100644
+--- a/recompui/src/renderer/rt64_render_context.cpp
++++ b/recompui/src/renderer/rt64_render_context.cpp
+@@ -344,6 +344,11 @@ void renderer::RT64Context::send_dl(const OSTask* task) {
+     app->processDisplayLists(app->core.RDRAM, task->t.data_ptr & 0x3FFFFFF, 0, true);
+ }
+ 
++void renderer::RT64Context::send_rdp_list(uint32_t start, uint32_t end) {
++    check_texture_pack_actions();
++    app->processDisplayLists(app->core.RDRAM, start & 0x3FFFFFF, end & 0x3FFFFFF, false);
++}
++
+ void renderer::RT64Context::send_dummy_workload(uint32_t fb_address) {
+     app->state->listProcessBegin();
+     app->state->rdp->setColorImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 320, fb_address);

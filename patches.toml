@@ -1,0 +1,26 @@
+# Config file for recompiling Battlezone: Rise of the Black Dogs' native patches
+# (patches/*.c, cross-compiled to MIPS via patches/Makefile -> patches.elf).
+#
+# This is a separate pipeline from battlezone.us.rev0.toml (which
+# recompiles the game's own ROM-derived functions): patches.elf isn't a ROM
+# dump, it's real object code we control, so N64Recomp reads it via
+# elf_path/ELF-input mode instead of rom_file_path/symbols_file_path.
+
+[input]
+# Paths are relative to the location of this config file.
+elf_path = "patches/patches.elf"
+output_func_path = "RecompiledPatches"
+single_file_output = true
+# Allow absolute symbols (syms.ld's 0x8F0000xx dummy addresses) to be used
+# as jump targets, so calls to native runtime functions like
+# recomp_run_ui_callbacks resolve instead of erroring as out-of-range.
+use_absolute_symbols = true
+# Resolve calls into the original game's own functions (e.g. func_80XXXXXX)
+# by name against the same symbol table the main recompile uses.
+func_reference_syms_file = "BattlezoneSyms/battlezone.us.rev0.syms.toml"
+# Tell the recompiler to write the output binary directly (handles patching
+# MIPS32 relocs correctly, unlike running objcopy ourselves).
+output_binary_path = "patches/patches.bin"
+# clang emits many unpaired LO16 relocations for this kind of freestanding
+# MIPS code; they're expected here, not a sign of a bad build.
+unpaired_lo16_warnings = false

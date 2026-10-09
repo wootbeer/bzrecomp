@@ -1,0 +1,95 @@
+diff --git a/librecomp/src/dp.cpp b/librecomp/src/dp.cpp
+index 97dbd8e..2331a8b 100644
+--- a/librecomp/src/dp.cpp
++++ b/librecomp/src/dp.cpp
+@@ -1,4 +1,5 @@
+ #include "recomp.h"
++#include "ultramodern/ultramodern.hpp"
+ 
+ enum class RDPStatusBit {
+     XbusDmem = 0,
+@@ -29,8 +30,14 @@ constexpr void update_bit(uint32_t& state, uint32_t flags, RDPStatusBit bit) {
+ 
+ uint32_t rdp_state = 1 << (int)RDPStatusBit::BufferReady;
+ 
++// s32 osDpSetNextBuffer(void* buf, u64 size): start the RDP on a command list
++// directly, without an RSP task. Both arguments are in registers (the 64-bit
++// size in $a2/$a3 under the o32 ABI). The DP interrupt follows once drawn.
+ extern "C" void osDpSetNextBuffer_recomp(uint8_t* rdram, recomp_context* ctx) {
+-    assert(false);
++    uint32_t start = (uint32_t)ctx->r4 & 0x1FFFFFFF;
++    uint32_t size = (uint32_t)ctx->r7;
++    ultramodern::submit_rdp_list(start, start + size);
++    ctx->r2 = 0;
+ }
+ 
+ extern "C" void osDpGetStatus_recomp(uint8_t* rdram, recomp_context* ctx) {
+diff --git a/ultramodern/include/ultramodern/renderer_context.hpp b/ultramodern/include/ultramodern/renderer_context.hpp
+index d60c4ec..93cb72d 100644
+--- a/ultramodern/include/ultramodern/renderer_context.hpp
++++ b/ultramodern/include/ultramodern/renderer_context.hpp
+@@ -84,6 +84,9 @@ namespace ultramodern {
+ 
+                 virtual void enable_instant_present() = 0;
+                 virtual void send_dl(const OSTask* task) = 0;
++                // A raw RDP command list [start, end) sent with osDpSetNextBuffer
++                // (no RSP task). Physical RDRAM addresses.
++                virtual void send_rdp_list(uint32_t start, uint32_t end) { (void)start; (void)end; }
+                 virtual void send_dummy_workload(uint32_t fb_address) = 0;
+                 virtual void update_screen() = 0;
+                 virtual void shutdown() = 0;
+diff --git a/ultramodern/include/ultramodern/ultramodern.hpp b/ultramodern/include/ultramodern/ultramodern.hpp
+index 46aea61..718cabe 100644
+--- a/ultramodern/include/ultramodern/ultramodern.hpp
++++ b/ultramodern/include/ultramodern/ultramodern.hpp
+@@ -100,6 +100,8 @@ void set_entrypoint_thread();
+ bool is_entrypoint_thread();
+ bool is_game_thread();
+ void submit_rsp_task(RDRAM_ARG PTR(OSTask) task);
++// Draw an RDP command list sent with osDpSetNextBuffer (physical [start, end)).
++void submit_rdp_list(uint32_t start, uint32_t end);
+ void send_si_message();
+ uint32_t get_speed_multiplier();
+ 
+diff --git a/ultramodern/src/events.cpp b/ultramodern/src/events.cpp
+index 17d7a47..819beea 100644
+--- a/ultramodern/src/events.cpp
++++ b/ultramodern/src/events.cpp
+@@ -39,7 +39,12 @@ struct DummyWorkloadAction {
+     int32_t fb_address;
+ };
+ 
+-using Action = std::variant<SpTaskAction, ScreenUpdateAction, UpdateConfigAction, DummyWorkloadAction>;
++struct RdpListAction {
++    uint32_t start;
++    uint32_t end;
++};
++
++using Action = std::variant<SpTaskAction, ScreenUpdateAction, UpdateConfigAction, DummyWorkloadAction, RdpListAction>;
+ 
+ struct ViState {
+     const OSViMode* mode = nullptr;
+@@ -384,6 +389,12 @@ void gfx_thread_func(uint8_t* rdram, moodycamel::LightweightSemaphore* thread_re
+                 ultramodern::extensions::on_displaylist_completed(displaylist);
+                 // printf("Renderer ProcessDList time: %d us\n", static_cast<u32>(std::chrono::duration_cast<std::chrono::microseconds>(renderer_end - renderer_start).count()));
+             }
++            else if (const auto* rdp_action = std::get_if<RdpListAction>(&action)) {
++                // A command list sent straight to the RDP: draw it, then signal
++                // the DP interrupt the game waits for.
++                renderer_context->send_rdp_list(rdp_action->start, rdp_action->end);
++                dp_complete();
++            }
+             else if (const auto* screen_update_action = std::get_if<ScreenUpdateAction>(&action)) {
+                 events_context.vi.update_screen_regs = screen_update_action->regs;
+                 renderer_context->update_screen();
+@@ -575,6 +586,10 @@ void ultramodern::submit_rsp_task(RDRAM_ARG PTR(OSTask) task_) {
+     }
+ }
+ 
++void ultramodern::submit_rdp_list(uint32_t start, uint32_t end) {
++    events_context.action_queue.enqueue(RdpListAction{ start, end });
++}
++
+ void ultramodern::send_si_message() {
+     ultramodern::enqueue_external_message_src(events_context.si.mq, events_context.si.msg, false, ultramodern::EventMessageSource::Si);
+ }

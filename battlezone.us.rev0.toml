@@ -1,0 +1,153 @@
+# N64Recomp config for Battlezone: Rise of the Black Dogs (USA).
+#
+# Sections (BattlezoneSyms/battlezone.us.rev0.syms.toml, from
+# tools/find_functions.py): the boot segment IPL3 loads, plus three modules the
+# game's own segment table (0x80057A30) loads one at a time at 0x8010FFE0.
+#
+# Divides need no per-site hooks here: lib-patches/N64ModernRuntime/N64Recomp
+# makes the generated code give MIPS results for a zero divisor.
+
+[input]
+entrypoint = 0x80028400
+output_func_path = "RecompiledFuncs"
+rom_file_path = "Battlezone - Rise of the Black Dogs (USA).z64"
+symbols_file_path = "BattlezoneSyms/battlezone.us.rev0.syms.toml"
+
+[patches]
+# Native replacements (src/game/): no recompiled body; calls go to the C++.
+ignored = ["bz_debug_write"]
+
+# System code that can't run (and needn't) under the recompiled runtime:
+#  - 0x8003E438-0x8003EB3C: the game's own exception vectors and the handler
+#    they install (mtc0/mfc0 of EPC/ErrorEPC/Cause), plus two cache-op loops.
+#    Exceptions never fire here, and cache maintenance is a no-op.
+#  - func_80048E90: a data-cache writeback loop (`cache`), next to
+#    osWritebackDCache; a no-op here.
+#  - func_8004CCA0, func_8004CD44: pieces of libultra's __osException after
+#    __ptExceptionPreamble (0x8004CC80), which N64Recomp's built-in list skips
+#    by name but these fragments aren't named.
+stubs = [
+    "func_8003E438", "func_8003E51C", "func_8003E538", "func_8003E56C",
+    "func_8003E5F0", "func_8003E7A0", "func_8003EB3C",
+    "func_80048E90", "func_8004CCA0", "func_8004CD44",
+]
+
+# crt0 ends `jal main; break`. On hardware main never returns (its last
+# osStartThread switches to the idle thread for good); under the runtime,
+# osStartThread from the boot context starts the thread and returns, so main
+# returns and the `break` would end the program. Let crt0 return instead.
+[[patches.instruction]]
+func = "recomp_entrypoint"
+vram = 0x80028468
+value = 0x00000000
+
+# Uncached (KSEG1, 0xA0000000) addresses: the runtime maps RDRAM at KSEG0 only,
+# and cached and uncached views are the same memory here, so each game-side
+# `lui $x, 0xA000` becomes `lui $x, 0x8000`. (The other KSEG1 uses are in
+# libultra I/O functions the runtime replaces.) Found by scanning every
+# function for lui 0xA000-0xA07F; rerun that scan after symbol changes.
+
+[[patches.instruction]]
+func = "func_80029A50"
+vram = 0x80029bc0
+value = 0x3c028000
+
+[[patches.instruction]]
+func = "func_80029F68"
+vram = 0x8002a05c
+value = 0x3c038000
+
+[[patches.instruction]]
+func = "func_80029F68"
+vram = 0x8002a084
+value = 0x3c038000
+
+[[patches.instruction]]
+func = "func_8002C198"
+vram = 0x8002c19c
+value = 0x3c058000
+
+[[patches.instruction]]
+func = "func_8003D554"
+vram = 0x8003d5f4
+value = 0x3c038000
+
+# Module loads: tell the runtime which overlay now occupies 0x8010FFE0
+# (src/game/modules.cpp). func_8002A120(dst, PI address, size, flags) is the
+# game's ROM-read helper; the main loop reads each module through it.
+[[patches.hook]]
+func = "func_8002A120"
+before_vram = 0x8002a120
+text = "    bz_on_rom_read(rdram, (int32_t)ctx->r4, (uint32_t)ctx->r5, (uint32_t)ctx->r6);"
+
+# Busy-waits: loops that poll memory another thread updates (the tick counter
+# at 0x8007A590 and the frame flags beside it) with no OS call inside. The
+# runtime's scheduler is cooperative, so each loop head yields
+# (src/main/scheduler_workaround.cpp). Found with tools/scan_spin_loops.py;
+# its other hits are libultra I/O loops the runtime replaces, the dev-hardware
+# debug library, and a loop over a stack variable.
+
+[[patches.hook]]  # main loop: waits for the frame flags (0x8007A590 +0x9/+0xB/+0x14)
+func = "func_800295D0"
+before_vram = 0x80029708
+text = "    bz_yield_via_priority_drop(rdram);"
+
+[[patches.hook]]  # same frame flags
+func = "func_8002AE7C"
+before_vram = 0x8002aec4
+text = "    bz_yield_via_priority_drop(rdram);"
+
+[[patches.hook]]  # frame flag +0x14
+func = "func_8002B12C"
+before_vram = 0x8002b1d0
+text = "    bz_yield_via_priority_drop(rdram);"
+
+[[patches.hook]]  # wait N ticks of the counter at 0x8007A590
+func = "ovl0_func_801264FC"
+before_vram = 0x80126518
+text = "    bz_yield_via_priority_drop(rdram);"
+
+[[patches.hook]]  # tick counter
+func = "ovl1_func_8010FFE0"
+before_vram = 0x80110040
+text = "    bz_yield_via_priority_drop(rdram);"
+
+[[patches.hook]]  # tick counter
+func = "ovl1_func_80123970"
+before_vram = 0x80123c78
+text = "    bz_yield_via_priority_drop(rdram);"
+
+[[patches.hook]]  # tick counter
+func = "ovl1_func_80123970"
+before_vram = 0x80123cdc
+text = "    bz_yield_via_priority_drop(rdram);"
+
+[[patches.hook]]  # frame flags
+func = "ovl1_func_801983B0"
+before_vram = 0x80198418
+text = "    bz_yield_via_priority_drop(rdram);"
+
+[[patches.hook]]  # tick counter
+func = "ovl2_func_8010FFE0"
+before_vram = 0x80110b34
+text = "    bz_yield_via_priority_drop(rdram);"
+
+[[patches.hook]]  # tick counter
+func = "ovl2_func_8010FFE0"
+before_vram = 0x80110b68
+text = "    bz_yield_via_priority_drop(rdram);"
+
+[[patches.hook]]  # tick counter
+func = "ovl2_func_8010FFE0"
+before_vram = 0x80110bfc
+text = "    bz_yield_via_priority_drop(rdram);"
+
+[[patches.hook]]  # tick counter
+func = "ovl2_func_80110F30"
+before_vram = 0x80111024
+text = "    bz_yield_via_priority_drop(rdram);"
+
+[[patches.hook]]  # frame flags
+func = "ovl2_func_80112F78"
+before_vram = 0x80113074
+text = "    bz_yield_via_priority_drop(rdram);"
