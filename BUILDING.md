@@ -15,6 +15,33 @@ git submodule update --init --recursive
 This pulls in `lib/N64ModernRuntime`, `lib/RecompFrontend` and `lib/rt64`
 (plus rt64's own nested submodules), several hundred MB in all.
 
+## Windows with Visual Studio (the short way)
+
+After installing the Windows dependencies below (step 2):
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\tools\setup-windows.ps1 -Rom "C:\path\to\your Battlezone dump.n64"
+```
+
+This converts the ROM, applies `lib-patches/`, builds N64Recomp and generates
+`RecompiledFuncs/` (steps 3-5 below). Then in Visual Studio 2022:
+
+1. **File > Open > Folder...** and pick the repo folder. Visual Studio reads
+   `CMakePresets.json` and configures the project.
+2. In the configuration dropdown on the toolbar, pick
+   **Windows x64 Debug (clang-cl)** (or RelWithDebInfo / Release).
+3. In the startup item dropdown (the green arrow), pick
+   **BattlezoneRecompiled.exe**.
+4. **Build > Build All**, then **F5** to run it under the debugger.
+
+The build copies `assets/`, SDL2 and the DXC DLLs next to the exe, so it runs
+from the build folder (`build\windows-debug\`). On first launch it asks for the
+ROM. Rerun `setup-windows.ps1` after pulling changes to the symbol file,
+`battlezone.us.rev0.toml` or `lib-patches/`, then rebuild.
+
+For a release zip: `.\tools\package-windows.ps1 -Version 0.1.0`.
+
 ## 2. Install dependencies
 
 ### Windows
@@ -27,6 +54,8 @@ This pulls in `lib/N64ModernRuntime`, `lib/RecompFrontend` and `lib/rt64`
   `patches/` has to be cross-compiled for the N64, and the Windows builds of
   clang don't include the MIPS backend, so CMake runs that one step through
   `wsl.exe`.
+- Git, and Python 3 (only to convert a `.n64`/`.v64` dump; skip it if you
+  already have the `.z64`).
 
 ### Linux (Ubuntu/Debian)
 

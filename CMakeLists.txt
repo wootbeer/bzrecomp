@@ -214,6 +214,12 @@ endif()
 # Main executable
 add_executable(BattlezoneRecompiled)
 
+# The game loads assets/ relative to its working directory. Keep a copy next to
+# the exe so it runs from the build folder too (Visual Studio's F5, Explorer).
+add_custom_command(TARGET BattlezoneRecompiled POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/assets" "$<TARGET_FILE_DIR:BattlezoneRecompiled>/assets")
+
 # The frontend (src/main), the game-specific code (src/game) and the
 # recompiled RSP audio microcode (rsp/, generated from the ROM). If none of
 # these exist (e.g. a bare checkout), a placeholder target is built instead

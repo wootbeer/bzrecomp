@@ -82,3 +82,6 @@ dist/
 # Python bytecode
 __pycache__/
 run/
+
+# tools/setup-windows.ps1 output
+N64Recomp.log
