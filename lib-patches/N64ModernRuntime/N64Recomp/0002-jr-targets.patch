@@ -1,0 +1,166 @@
+diff --git a/include/recompiler/context.h b/include/recompiler/context.h
+index e7b4431..785085f 100644
+--- a/include/recompiler/context.h
++++ b/include/recompiler/context.h
+@@ -32,6 +32,8 @@ namespace N64Recomp {
+         bool reimplemented;
+         bool stubbed;
+         std::unordered_map<int32_t, std::string> function_hooks;
++        // Manually given targets for jr instructions, keyed by the jr's vram.
++        std::unordered_map<uint32_t, std::vector<uint32_t>> jr_targets;
+ 
+         Function(uint32_t vram, uint32_t rom, std::vector<uint32_t> words, std::string name, uint16_t section_index, bool ignored = false, bool reimplemented = false, bool stubbed = false)
+                 : vram(vram), rom(rom), words(std::move(words)), name(std::move(name)), section_index(section_index), ignored(ignored), reimplemented(reimplemented), stubbed(stubbed) {}
+diff --git a/src/config.cpp b/src/config.cpp
+index 1066aff..8b049e0 100644
+--- a/src/config.cpp
++++ b/src/config.cpp
+@@ -201,6 +201,35 @@ std::vector<N64Recomp::InstructionPatch> get_instruction_patches(const toml::tab
+     return ret;
+ }
+ 
++std::vector<N64Recomp::JrTargets> get_jr_targets(const toml::table* patches_data) {
++    std::vector<N64Recomp::JrTargets> ret;
++    const toml::node_view data = (*patches_data)["jr_targets"];
++    if (data.is_array()) {
++        data.as_array()->for_each([&ret](auto&& el) {
++            if constexpr (toml::is_table<decltype(el)>) {
++                const toml::table& cur = *el.as_table();
++                std::optional<std::string> func_name = cur["func"].value<std::string>();
++                std::optional<uint32_t> vram = cur["vram"].value<uint32_t>();
++                const toml::array* targets = cur["targets"].as_array();
++                if (!func_name.has_value() || !vram.has_value() || targets == nullptr) {
++                    throw toml::parse_error("jr_targets entry is missing required value(s)", el.source());
++                }
++                N64Recomp::JrTargets entry{ .func_name = func_name.value(), .vram = vram.value(), .targets = {} };
++                targets->for_each([&entry](auto&& t) {
++                    if constexpr (toml::is_integer<decltype(t)>) {
++                        entry.targets.push_back((uint32_t)*t);
++                    }
++                });
++                ret.push_back(std::move(entry));
++            }
++            else {
++                throw toml::parse_error("Invalid jr_targets entry", el.source());
++            }
++        });
++    }
++    return ret;
++}
++
+ std::vector<N64Recomp::FunctionTextHook> get_function_hooks(const toml::table* patches_data) {
+     std::vector<N64Recomp::FunctionTextHook> ret;
+ 
+@@ -462,6 +491,9 @@ N64Recomp::Config::Config(const char* path) {
+ 
+             // Function hooks (optional)
+             function_hooks = get_function_hooks(table);
++
++            // Manual jr targets (optional)
++            jr_targets = get_jr_targets(table);
+         }
+ 
+         // Use trace mode if enabled (optional)
+diff --git a/src/config.h b/src/config.h
+index 7d6db23..80c7045 100644
+--- a/src/config.h
++++ b/src/config.h
+@@ -19,6 +19,15 @@ namespace N64Recomp {
+         std::string text;
+     };
+ 
++    // The possible targets of a `jr` that analysis can't resolve as a jump
++    // table (e.g. a table pointer stepped through in a loop). The jr becomes a
++    // switch on the target address with a goto per target.
++    struct JrTargets {
++        std::string func_name;
++        uint32_t vram;
++        std::vector<uint32_t> targets;
++    };
++
+     struct FunctionSize {
+         std::string func_name;
+         uint32_t size_bytes;
+@@ -60,6 +69,7 @@ namespace N64Recomp {
+         std::vector<std::string> renamed_funcs;
+         std::vector<InstructionPatch> instruction_patches;
+         std::vector<FunctionTextHook> function_hooks;
++        std::vector<JrTargets> jr_targets;
+         std::vector<FunctionSize> manual_func_sizes;
+         std::vector<ManualFunction> manual_functions;
+         std::string bss_section_suffix;
+diff --git a/src/main.cpp b/src/main.cpp
+index f79580f..1d85883 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -585,6 +585,25 @@ int main(int argc, char** argv) {
+         func.function_hooks[instruction_index] = patch.text;
+     }
+ 
++    // Apply manual jr targets.
++    for (const N64Recomp::JrTargets& entry : config.jr_targets) {
++        auto func_find = context.functions_by_name.find(entry.func_name);
++        if (func_find == context.functions_by_name.end()) {
++            exit_failure(fmt::format("Function {} has jr_targets but does not exist!", entry.func_name));
++        }
++        N64Recomp::Function& func = context.functions[func_find->second];
++        uint32_t func_end = func.vram + (uint32_t)(func.words.size() * sizeof(func.words[0]));
++        if (entry.vram < func.vram || entry.vram >= func_end) {
++            exit_failure(fmt::format("Function {} has jr_targets for 0x{:08X} but doesn't contain it!", entry.func_name, entry.vram));
++        }
++        for (uint32_t target : entry.targets) {
++            if (target < func.vram || target >= func_end) {
++                exit_failure(fmt::format("Function {}: jr_targets target 0x{:08X} is outside the function!", entry.func_name, target));
++            }
++        }
++        func.jr_targets[entry.vram] = entry.targets;
++    }
++
+     std::ofstream current_output_file;
+     size_t output_file_count = 0;
+     size_t cur_file_function_count = 0;
+diff --git a/src/recompilation.cpp b/src/recompilation.cpp
+index c228433..85f1a18 100644
+--- a/src/recompilation.cpp
++++ b/src/recompilation.cpp
+@@ -553,6 +553,26 @@ bool process_instruction(GeneratorType& generator, const N64Recomp::Context& con
+                 break;
+             }
+ 
++            auto jr_targets_find = func.jr_targets.find(instr_vram);
++            if (jr_targets_find != func.jr_targets.end()) {
++                if (!process_delay_slot(false)) {
++                    return false;
++                }
++                print_indent();
++                fmt::print(output_file, "switch ((uint32_t){}{}) {{\n", ctx_gpr_prefix(rs), rs);
++                for (uint32_t target : jr_targets_find->second) {
++                    print_indent();
++                    print_indent();
++                    fmt::print(output_file, "case 0x{:08X}u: goto L_{:08X};\n", target, target);
++                }
++                print_indent();
++                print_indent();
++                generator.emit_switch_error(instr_vram, 0);
++                print_indent();
++                generator.emit_switch_close();
++                break;
++            }
++
+             fmt::print("[Info] Indirect tail call in {}\n", func.name);
+             print_func_call_by_register(rs);
+             print_indent();
+@@ -808,6 +828,13 @@ bool recompile_function_impl(GeneratorType& generator, const N64Recomp::Context&
+ 
+         std::unordered_set<uint32_t> jtbl_lw_instructions{};
+ 
++        // Add manual jr target labels into function
++        for (const auto& [jr_vram, targets] : func.jr_targets) {
++            for (uint32_t target : targets) {
++                branch_labels.insert(target);
++            }
++        }
++
+         // Add jump table labels into function
+         for (const auto& jtbl : stats.jump_tables) {
+             jtbl_lw_instructions.insert(jtbl.lw_vram);

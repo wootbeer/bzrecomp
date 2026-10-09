@@ -25,7 +25,7 @@ Usage: find_functions.py <rom.z64> <n64sym boot output> <out syms toml> [report]
 import sys
 import struct
 import rabbitizer
-from bzlayout import SECTIONS, NOT_CODE, KNOWN_NAMES, load_rom, word
+from bzlayout import SECTIONS, NOT_CODE, KNOWN_NAMES, all_sections, load_rom, word
 
 RA = 31
 BOOT = None  # the boot Section, set by Finder: code anything may call
@@ -54,6 +54,7 @@ class Section:
         self.rom_end = rom_end
         self.vend = vram + (rom_end - rom_start)
         self.bss_end = bss_end
+        self.parent = None  # another Section whose code this one may call
 
     def has(self, v):
         if not (self.vram <= v < self.vend):
@@ -90,6 +91,8 @@ def data_like(raw, ins):
         return True
     if op in (OP_J, OP_JAL) and not in_ram(((raw & 0x3FFFFFF) << 2) | 0x80000000):
         return True
+    if op == OP_SPECIAL and (raw & 0x3F) in (0x08, 0x09) and ((raw >> 21) & 31) == 0:
+        return True  # jr/jalr $zero
     if ins.isTrap() and (ins.getOpcodeName() not in ("teq", "tne") or ((raw >> 21) & 31) == 0):
         return True  # compilers only emit `teq divisor, $zero` (divide checks)
     return False
@@ -126,6 +129,7 @@ def plausible_start(sec, v, max_insns=64):
         if raw >> 26 in (OP_J, OP_JAL):
             t = ((raw & 0x3FFFFFF) << 2) | 0x80000000
             if not in_ram(t) or not (sec.has(t) or (BOOT is not None and BOOT.has(t))
+                                     or (sec.parent is not None and sec.parent.has(t))
                                      or (sec is BOOT and raw >> 26 == OP_JAL and in_module_slot(t))):
                 return False
         if ins.isBranch():
@@ -145,8 +149,11 @@ def resolve_const(sec, start, before, reg, depth=0):
     the table base, with the other side being the scaled index)."""
     if depth > 4:
         return None
+    # A table base kept in a saved register is often set in the prologue,
+    # far from its use; scan back a long way (stopping at the register's
+    # nearest earlier write, in address order).
     a = before - 4
-    while a >= start and a >= before - 4 * 32:
+    while a >= start and a >= before - 4 * 2048:
         raw = sec.w(a)
         op = raw >> 26
         rs, rt, rd = (raw >> 21) & 31, (raw >> 16) & 31, (raw >> 11) & 31
@@ -216,16 +223,20 @@ def find_jump_table(sec, start, jr_addr, reg):
 
 
 class Finder:
-    def __init__(self, rom, sec_args):
+    def __init__(self, rom, sec_args, parents=None):
         global BOOT
         self.secs = [Section(rom, *s) for s in sec_args]
         BOOT = self.secs[0]
+        by_name = {s.name: s for s in self.secs}
+        for name, parent in (parents or {}).items():
+            by_name[name].parent = by_name[parent]
         self.starts = {s.name: {} for s in self.secs}   # name -> {vram: reason}
         self.funcs = {s.name: {} for s in self.secs}    # name -> {vram: end}
         self.jtables = {s.name: {} for s in self.secs}  # name -> {table: (jr, targets)}
         self.names = {s.name: {} for s in self.secs}
         self.notes = []
         self.origin = {}
+        self.jtable_owner = {}
 
     def add_start(self, sec, v, why):
         if not sec.has(v) or v & 3:
@@ -269,7 +280,8 @@ class Finder:
                     ptrs.add(val)
                 if op in (OP_J, OP_JAL):
                     t = ((raw & 0x3FFFFFF) << 2) | (pc & 0xF0000000)
-                    if not (sec.has(t) or self.secs[0].has(t) or (sec is self.secs[0] and op == OP_JAL and in_module_slot(t))):
+                    if not (sec.has(t) or self.secs[0].has(t) or (sec.parent is not None and sec.parent.has(t))
+                            or (sec is self.secs[0] and op == OP_JAL and in_module_slot(t))):
                         self.notes.append(f"{sec.name} func {start:#x}: jump to {t:#x} outside reachable code at {pc:#x}")
                         self.last_bad = True
                         break
@@ -323,6 +335,7 @@ class Finder:
                                 if n > 512:
                                     break
                         self.jtables[sec.name][table] = (pc, targets)
+                        self.jtable_owner[(sec.name, table)] = start
                         for t in targets:
                             if sec.has(t):
                                 work.append(t)
@@ -469,6 +482,8 @@ class Finder:
         """Which section a code address from `sec` refers to: its own, else boot."""
         if sec.has(v):
             return sec
+        if sec.parent is not None and sec.parent.has(v):
+            return sec.parent
         boot = self.secs[0]
         if boot.has(v):
             return boot
@@ -485,6 +500,8 @@ class Finder:
             pass
         elif boot.has(v):
             out.append(boot)
+        if sec.parent is not None and sec.parent.has(v):
+            out.append(sec.parent)
         return out
 
     def looks_like_entry(self, sec, v):
@@ -530,11 +547,15 @@ def main():
     out_path = sys.argv[3]
     report_path = sys.argv[4] if len(sys.argv) > 4 else None
 
-    f = Finder(rom, SECTIONS)
+    sections, parents = all_sections(rom)
+    f = Finder(rom, sections, parents)
     boot = f.secs[0]
     seeds = [("boot", 0x80028400, "crt0")]
     for s in f.secs[1:]:
-        seeds.append((s.name, s.vram, "module entry"))
+        if s.parent is None:
+            seeds.append((s.name, s.vram, "module entry"))  # called at the slot address
+        else:
+            seeds.append((s.name, s.w(s.vram), "module entry"))  # first word: entry point
     lib_names = {}
     for v, n in syms:
         if boot.has(v) and not any(t in n for t in ("_rodata_", "_data_", "_bss_")) and plausible_start(boot, v):
@@ -561,6 +582,8 @@ def main():
             if not fl:
                 continue
             last = max(fe for _, fe in fl)
+            if sec.parent is not None:
+                last = sec.vend  # mission blobs: data first, code runs to the end
             v = fl[0][0]
             while v < last:
                 if v in cov or sec.w(v) == 0:
@@ -621,6 +644,21 @@ def main():
             o.write(f'    {{ name = "{name}", vram = {fs:#010x}, size = {fe - fs:#x} }},\n')
         o.write("]\n\n")
     o.close()
+
+    # Jump tables, for N64Recomp's jr_targets (tools/update_config.py): the
+    # function that owns each jr, as named in the symbol file.
+    import json
+    tables = []
+    for sec in f.secs:
+        for table, (jr, targets) in f.jtables[sec.name].items():
+            owner = f.jtable_owner.get((sec.name, table))
+            if owner is None or not targets:
+                continue
+            name = lib_names.get(owner) if sec is boot else None
+            if name is None:
+                name = f"func_{owner:08X}" if sec is boot else f"{sec.name}_func_{owner:08X}"
+            tables.append({"func": name, "jr": jr, "table": table, "targets": sorted(set(targets))})
+    json.dump(tables, open(out_path.rsplit(".", 1)[0] + ".jtables.json", "w"), indent=0)
 
     if report_path:
         r = open(report_path, "w")

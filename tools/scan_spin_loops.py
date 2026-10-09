@@ -5,7 +5,9 @@ lets the thread it waits on run, so each real one needs a yield hook
 (bz_yield_via_priority_drop) inside it. Review the list: loops over arrays
 also match; a spin re-reads the same address every iteration.
 
-Usage: scan_spin_loops.py <rom.z64> <syms.toml>
+Usage: scan_spin_loops.py <rom.z64> <syms.toml> [--toml]
+  --toml  print the [[patches.hook]] entries for battlezone.us.rev0.toml
+          (one per loop head), leaving out NOT_SPINS
 """
 import re
 import sys
@@ -13,7 +15,18 @@ import rabbitizer
 from bzlayout import load_rom, word
 
 
+# Matches that aren't waits on another thread, or that never run here.
+NOT_SPINS = {
+    "ovl1_func_801712E0",  # loops over a stack variable
+}
+NOT_SPIN_PREFIXES = ("os", "__os", "__rmon")  # libultra; the runtime replaces it
+# the dev-cartridge debug library (0x8003C700-0x8003EB3C): PI register polls
+NOT_SPIN_RANGE = (0x8003C700, 0x8003EB3C)
+
+
 def main():
+    as_toml = "--toml" in sys.argv
+    heads = {}
     rom = load_rom(sys.argv[1])
     txt = open(sys.argv[2]).read()
     for st in re.split(r"\[\[section\]\]", txt)[1:]:
@@ -39,11 +52,40 @@ def main():
                 if not loads or stores:
                     continue
                 bases = {b.rs.value for b in loads}
-                advanced = any(b.modifiesRt() and b.rt.value in bases for b in body) or \
-                           any(b.modifiesRd() and b.rd.value in bases for b in body)
+                # Re-materializing a constant address each time round (lui, or an
+                # addiu/ori onto a register that lui set) still polls one place.
+                # Two passes: the loop wraps, so a lui in the closing branch's delay
+                # slot feeds the next iteration's addiu. Judge on the second pass.
+                const_regs = set()
+                advanced = False
+                for b in body + body:
+                    if b is body[0]:
+                        advanced = False
+                    opname = b.getOpcodeName()
+                    if opname == "lui":
+                        const_regs.add(b.rt.value)
+                        continue
+                    if opname in ("addiu", "ori") and b.rs.value in const_regs:
+                        const_regs.add(b.rt.value)
+                        continue
+                    if b.modifiesRt() and b.rt.value in bases:
+                        advanced = True
+                    if b.modifiesRd() and b.rd.value in bases:
+                        advanced = True
                 if advanced:
                     continue
-                print(f"{name} loop {tgt:#010x}-{pc:#010x}: " + "; ".join(b.disassemble() for b in loads))
+                if not as_toml:
+                    print(f"{name} loop {tgt:#010x}-{pc:#010x}: " + "; ".join(b.disassemble() for b in loads))
+                    continue
+                if (name in NOT_SPINS or name.startswith(NOT_SPIN_PREFIXES)
+                        or NOT_SPIN_RANGE[0] <= start < NOT_SPIN_RANGE[1]):
+                    continue
+                heads[(name, tgt)] = "; ".join(b.disassemble() for b in loads)
+    for (name, head), what in sorted(heads.items()):
+        print(f'\n[[patches.hook]]  # {" ".join(what.split())}')
+        print(f'func = "{name}"')
+        print(f"before_vram = {head:#010x}")
+        print('text = "    bz_yield_via_priority_drop(rdram);"')
 
 
 if __name__ == "__main__":

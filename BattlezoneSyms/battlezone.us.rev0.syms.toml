@@ -710,7 +710,6 @@ functions = [
     { name = "atan2f", vram = 0x80057710, size = 0x1e0 },
     { name = "func_800578F0", vram = 0x800578f0, size = 0x130 },
     { name = "floorf", vram = 0x80057a20, size = 0xc },
-    { name = "func_800682FC", vram = 0x800682fc, size = 0x8 },
 ]
 
 [[section]]
@@ -1319,9 +1318,6 @@ functions = [
     { name = "ovl1_func_801339B0", vram = 0x801339b0, size = 0xc },
     { name = "ovl1_func_801339BC", vram = 0x801339bc, size = 0x24 },
     { name = "ovl1_func_801339E0", vram = 0x801339e0, size = 0x488 },
-    { name = "ovl1_func_80133C3C", vram = 0x80133c3c, size = 0x22c },
-    { name = "ovl1_func_80133CB8", vram = 0x80133cb8, size = 0x1b0 },
-    { name = "ovl1_func_80133CD4", vram = 0x80133cd4, size = 0x194 },
     { name = "ovl1_func_80133E68", vram = 0x80133e68, size = 0x1ac },
     { name = "ovl1_func_80134014", vram = 0x80134014, size = 0x124 },
     { name = "ovl1_func_80134138", vram = 0x80134138, size = 0xdc },
@@ -1537,7 +1533,6 @@ functions = [
     { name = "ovl1_func_8013DE60", vram = 0x8013de60, size = 0x34 },
     { name = "ovl1_func_8013DE94", vram = 0x8013de94, size = 0x1c },
     { name = "ovl1_func_8013DEB0", vram = 0x8013deb0, size = 0x1c },
-    { name = "ovl1_func_8013DECC", vram = 0x8013decc, size = 0x8 },
     { name = "ovl1_func_8013DED0", vram = 0x8013ded0, size = 0x22c },
     { name = "ovl1_func_8013E0FC", vram = 0x8013e0fc, size = 0x5c },
     { name = "ovl1_func_8013E158", vram = 0x8013e158, size = 0xdc },
@@ -2674,7 +2669,6 @@ functions = [
     { name = "ovl1_func_8016D4D0", vram = 0x8016d4d0, size = 0x198 },
     { name = "ovl1_func_8016D670", vram = 0x8016d670, size = 0x54 },
     { name = "ovl1_func_8016D6C4", vram = 0x8016d6c4, size = 0x38 },
-    { name = "ovl1_func_8016D6FC", vram = 0x8016d6fc, size = 0x8 },
     { name = "ovl1_func_8016D700", vram = 0x8016d700, size = 0xec },
     { name = "ovl1_func_8016D7EC", vram = 0x8016d7ec, size = 0x72c },
     { name = "ovl1_func_8016DF18", vram = 0x8016df18, size = 0x19c },
@@ -3179,7 +3173,6 @@ functions = [
     { name = "ovl1_func_8017C854", vram = 0x8017c854, size = 0x44 },
     { name = "ovl1_func_8017C898", vram = 0x8017c898, size = 0x24 },
     { name = "ovl1_func_8017C8BC", vram = 0x8017c8bc, size = 0xfc },
-    { name = "ovl1_func_8017C9B8", vram = 0x8017c9b8, size = 0x8 },
     { name = "ovl1_func_8017C9C0", vram = 0x8017c9c0, size = 0x58 },
     { name = "ovl1_func_8017CA18", vram = 0x8017ca18, size = 0x30 },
     { name = "ovl1_func_8017CA48", vram = 0x8017ca48, size = 0x44 },
@@ -3469,13 +3462,6 @@ functions = [
     { name = "ovl1_func_8018A648", vram = 0x8018a648, size = 0x58 },
     { name = "ovl1_func_8018A6A0", vram = 0x8018a6a0, size = 0x340 },
     { name = "ovl1_func_8018A9E0", vram = 0x8018a9e0, size = 0x1114 },
-    { name = "ovl1_func_8018B944", vram = 0x8018b944, size = 0x1b0 },
-    { name = "ovl1_func_8018B974", vram = 0x8018b974, size = 0x10c },
-    { name = "ovl1_func_8018BA0C", vram = 0x8018ba0c, size = 0x68 },
-    { name = "ovl1_func_8018BA1C", vram = 0x8018ba1c, size = 0x58 },
-    { name = "ovl1_func_8018BA24", vram = 0x8018ba24, size = 0x50 },
-    { name = "ovl1_func_8018BA34", vram = 0x8018ba34, size = 0x40 },
-    { name = "ovl1_func_8018BA40", vram = 0x8018ba40, size = 0x34 },
     { name = "ovl1_func_8018BAF4", vram = 0x8018baf4, size = 0x898 },
     { name = "ovl1_func_8018C38C", vram = 0x8018c38c, size = 0xb0 },
     { name = "ovl1_func_8018C43C", vram = 0x8018c43c, size = 0x5dc },
@@ -4246,19 +4232,7 @@ functions = [
     { name = "ovl1_func_801ADB60", vram = 0x801adb60, size = 0x160 },
     { name = "ovl1_func_801ADCC0", vram = 0x801adcc0, size = 0xe3c },
     { name = "ovl1_func_801AEAFC", vram = 0x801aeafc, size = 0x4bc },
-    { name = "ovl1_func_801AEBA4", vram = 0x801aeba4, size = 0x414 },
-    { name = "ovl1_func_801AEE94", vram = 0x801aee94, size = 0x2c },
-    { name = "ovl1_func_801AEEC0", vram = 0x801aeec0, size = 0x38 },
-    { name = "ovl1_func_801AEEF8", vram = 0x801aeef8, size = 0x5c },
-    { name = "ovl1_func_801AEF1C", vram = 0x801aef1c, size = 0x38 },
-    { name = "ovl1_func_801AEF54", vram = 0x801aef54, size = 0x34 },
     { name = "ovl1_func_801AEFB8", vram = 0x801aefb8, size = 0x428 },
-    { name = "ovl1_func_801AF004", vram = 0x801af004, size = 0x3dc },
-    { name = "ovl1_func_801AF2E4", vram = 0x801af2e4, size = 0xcc },
-    { name = "ovl1_func_801AF30C", vram = 0x801af30c, size = 0xa4 },
-    { name = "ovl1_func_801AF334", vram = 0x801af334, size = 0x7c },
-    { name = "ovl1_func_801AF35C", vram = 0x801af35c, size = 0x54 },
-    { name = "ovl1_func_801AF384", vram = 0x801af384, size = 0x2c },
     { name = "ovl1_func_801AF3E0", vram = 0x801af3e0, size = 0x88 },
     { name = "ovl1_func_801AF468", vram = 0x801af468, size = 0x24 },
     { name = "ovl1_func_801AF48C", vram = 0x801af48c, size = 0x14c },
@@ -4555,7 +4529,6 @@ functions = [
     { name = "ovl1_func_801B8200", vram = 0x801b8200, size = 0x1c },
     { name = "ovl1_func_801B821C", vram = 0x801b821c, size = 0x48 },
     { name = "ovl1_func_801B8270", vram = 0x801b8270, size = 0xe0 },
-    { name = "ovl1_func_801B82B0", vram = 0x801b82b0, size = 0xa0 },
     { name = "ovl1_func_801B8350", vram = 0x801b8350, size = 0x288 },
     { name = "ovl1_func_801B85D8", vram = 0x801b85d8, size = 0x348 },
     { name = "ovl1_func_801B8920", vram = 0x801b8920, size = 0x2d0 },
@@ -4602,7 +4575,6 @@ functions = [
     { name = "ovl1_func_801BC56C", vram = 0x801bc56c, size = 0x14 },
     { name = "ovl1_func_801BC580", vram = 0x801bc580, size = 0x8 },
     { name = "ovl1_func_801BC588", vram = 0x801bc588, size = 0x2c },
-    { name = "ovl1_func_801BD314", vram = 0x801bd314, size = 0x8 },
 ]
 
 [[section]]
@@ -4628,5 +4600,952 @@ functions = [
     { name = "ovl2_func_8011339C", vram = 0x8011339c, size = 0x64 },
     { name = "ovl2_func_80113400", vram = 0x80113400, size = 0x7c },
     { name = "ovl2_func_8011347C", vram = 0x8011347c, size = 0x7c },
+]
+
+[[section]]
+name = ".mis00"
+rom = 0x1d0440
+vram = 0x801fd150
+size = 0x1098
+
+functions = [
+    { name = "mis00_func_801FD220", vram = 0x801fd220, size = 0x3c },
+    { name = "mis00_func_801FD25C", vram = 0x801fd25c, size = 0xe1c },
+    { name = "mis00_func_801FE078", vram = 0x801fe078, size = 0x2c },
+    { name = "mis00_func_801FE0A4", vram = 0x801fe0a4, size = 0x64 },
+    { name = "mis00_func_801FE108", vram = 0x801fe108, size = 0x2c },
+    { name = "mis00_func_801FE134", vram = 0x801fe134, size = 0x1c },
+    { name = "mis00_func_801FE150", vram = 0x801fe150, size = 0x24 },
+    { name = "mis00_func_801FE174", vram = 0x801fe174, size = 0x34 },
+    { name = "mis00_func_801FE1A8", vram = 0x801fe1a8, size = 0xc },
+    { name = "mis00_func_801FE1B4", vram = 0x801fe1b4, size = 0x24 },
+]
+
+[[section]]
+name = ".mis01"
+rom = 0x1d14d8
+vram = 0x801fd150
+size = 0x2de8
+
+functions = [
+    { name = "mis01_func_801FD2E8", vram = 0x801fd2e8, size = 0x39c },
+    { name = "mis01_func_801FD684", vram = 0x801fd684, size = 0x2f8 },
+    { name = "mis01_func_801FD97C", vram = 0x801fd97c, size = 0x2378 },
+    { name = "mis01_func_801FFCF4", vram = 0x801ffcf4, size = 0xd4 },
+    { name = "mis01_func_801FFDC8", vram = 0x801ffdc8, size = 0x2c },
+    { name = "mis01_func_801FFDF4", vram = 0x801ffdf4, size = 0x2c },
+    { name = "mis01_func_801FFE20", vram = 0x801ffe20, size = 0x1c },
+    { name = "mis01_func_801FFE3C", vram = 0x801ffe3c, size = 0x64 },
+    { name = "mis01_func_801FFEA0", vram = 0x801ffea0, size = 0x24 },
+    { name = "mis01_func_801FFEC4", vram = 0x801ffec4, size = 0x34 },
+    { name = "mis01_func_801FFEF8", vram = 0x801ffef8, size = 0xc },
+    { name = "mis01_func_801FFF04", vram = 0x801fff04, size = 0x24 },
+]
+
+[[section]]
+name = ".mis02"
+rom = 0x1d42c0
+vram = 0x801fd150
+size = 0x4008
+
+functions = [
+    { name = "mis02_func_801FD2B8", vram = 0x801fd2b8, size = 0x37c },
+    { name = "mis02_func_801FD634", vram = 0x801fd634, size = 0x314 },
+    { name = "mis02_func_801FD948", vram = 0x801fd948, size = 0x35cc },
+    { name = "mis02_func_80200F14", vram = 0x80200f14, size = 0x34 },
+    { name = "mis02_func_80200F48", vram = 0x80200f48, size = 0xd4 },
+    { name = "mis02_func_8020101C", vram = 0x8020101c, size = 0x2c },
+    { name = "mis02_func_80201048", vram = 0x80201048, size = 0x2c },
+    { name = "mis02_func_80201074", vram = 0x80201074, size = 0x1c },
+    { name = "mis02_func_80201090", vram = 0x80201090, size = 0x64 },
+    { name = "mis02_func_802010F4", vram = 0x802010f4, size = 0x24 },
+    { name = "mis02_func_80201118", vram = 0x80201118, size = 0xc },
+    { name = "mis02_func_80201124", vram = 0x80201124, size = 0x24 },
+]
+
+[[section]]
+name = ".mis03"
+rom = 0x1d82c8
+vram = 0x801fd150
+size = 0x5000
+
+functions = [
+    { name = "mis03_func_801FD400", vram = 0x801fd400, size = 0x2d8 },
+    { name = "mis03_func_801FD6D8", vram = 0x801fd6d8, size = 0x2e0 },
+    { name = "mis03_func_801FD9B8", vram = 0x801fd9b8, size = 0x4554 },
+    { name = "mis03_func_80201F0C", vram = 0x80201f0c, size = 0x34 },
+    { name = "mis03_func_80201F40", vram = 0x80201f40, size = 0xd4 },
+    { name = "mis03_func_80202014", vram = 0x80202014, size = 0x2c },
+    { name = "mis03_func_80202040", vram = 0x80202040, size = 0x2c },
+    { name = "mis03_func_8020206C", vram = 0x8020206c, size = 0x1c },
+    { name = "mis03_func_80202088", vram = 0x80202088, size = 0x64 },
+    { name = "mis03_func_802020EC", vram = 0x802020ec, size = 0x24 },
+    { name = "mis03_func_80202110", vram = 0x80202110, size = 0xc },
+    { name = "mis03_func_8020211C", vram = 0x8020211c, size = 0x24 },
+]
+
+[[section]]
+name = ".mis04"
+rom = 0x1dd2c8
+vram = 0x801fd150
+size = 0x41f8
+
+functions = [
+    { name = "mis04_func_801FD328", vram = 0x801fd328, size = 0x50c },
+    { name = "mis04_func_801FD834", vram = 0x801fd834, size = 0x382c },
+    { name = "mis04_func_80201060", vram = 0x80201060, size = 0x34 },
+    { name = "mis04_func_80201094", vram = 0x80201094, size = 0xd4 },
+    { name = "mis04_func_80201168", vram = 0x80201168, size = 0x2c },
+    { name = "mis04_func_80201194", vram = 0x80201194, size = 0x2c },
+    { name = "mis04_func_802011C0", vram = 0x802011c0, size = 0x1c },
+    { name = "mis04_func_802011DC", vram = 0x802011dc, size = 0xa0 },
+    { name = "mis04_func_8020127C", vram = 0x8020127c, size = 0x24 },
+    { name = "mis04_func_802012A0", vram = 0x802012a0, size = 0xc },
+    { name = "mis04_func_802012AC", vram = 0x802012ac, size = 0x24 },
+    { name = "mis04_func_802012D0", vram = 0x802012d0, size = 0x68 },
+]
+
+[[section]]
+name = ".mis05"
+rom = 0x1e14c0
+vram = 0x801fd150
+size = 0x4200
+
+functions = [
+    { name = "mis05_func_801FD320", vram = 0x801fd320, size = 0x34 },
+    { name = "mis05_func_801FD354", vram = 0x801fd354, size = 0xf8 },
+    { name = "mis05_func_801FD44C", vram = 0x801fd44c, size = 0x4e4 },
+    { name = "mis05_func_801FD930", vram = 0x801fd930, size = 0x3cc },
+    { name = "mis05_func_801FDCFC", vram = 0x801fdcfc, size = 0x3514 },
+    { name = "mis05_func_80201210", vram = 0x80201210, size = 0x2c },
+    { name = "mis05_func_8020123C", vram = 0x8020123c, size = 0x2c },
+    { name = "mis05_func_80201268", vram = 0x80201268, size = 0x1c },
+    { name = "mis05_func_80201284", vram = 0x80201284, size = 0x64 },
+    { name = "mis05_func_802012E8", vram = 0x802012e8, size = 0x24 },
+    { name = "mis05_func_8020130C", vram = 0x8020130c, size = 0xc },
+    { name = "mis05_func_80201318", vram = 0x80201318, size = 0x24 },
+]
+
+[[section]]
+name = ".mis06"
+rom = 0x1e56c0
+vram = 0x801fd150
+size = 0x3a08
+
+functions = [
+    { name = "mis06_func_801FD368", vram = 0x801fd368, size = 0x3cc },
+    { name = "mis06_func_801FD734", vram = 0x801fd734, size = 0x6f0 },
+    { name = "mis06_func_801FDE24", vram = 0x801fde24, size = 0x2aec },
+    { name = "mis06_func_80200910", vram = 0x80200910, size = 0xd4 },
+    { name = "mis06_func_802009E4", vram = 0x802009e4, size = 0x2c },
+    { name = "mis06_func_80200A10", vram = 0x80200a10, size = 0x2c },
+    { name = "mis06_func_80200A3C", vram = 0x80200a3c, size = 0x1c },
+    { name = "mis06_func_80200A58", vram = 0x80200a58, size = 0x64 },
+    { name = "mis06_func_80200ABC", vram = 0x80200abc, size = 0x24 },
+    { name = "mis06_func_80200AE0", vram = 0x80200ae0, size = 0x34 },
+    { name = "mis06_func_80200B14", vram = 0x80200b14, size = 0xc },
+    { name = "mis06_func_80200B20", vram = 0x80200b20, size = 0x24 },
+]
+
+[[section]]
+name = ".mis07"
+rom = 0x1e90c8
+vram = 0x801fd150
+size = 0x31c0
+
+functions = [
+    { name = "mis07_func_801FD2E8", vram = 0x801fd2e8, size = 0x34 },
+    { name = "mis07_func_801FD31C", vram = 0x801fd31c, size = 0xd4 },
+    { name = "mis07_func_801FD3F0", vram = 0x801fd3f0, size = 0x39c },
+    { name = "mis07_func_801FD78C", vram = 0x801fd78c, size = 0x42c },
+    { name = "mis07_func_801FDBB8", vram = 0x801fdbb8, size = 0x261c },
+    { name = "mis07_func_802001D4", vram = 0x802001d4, size = 0x2c },
+    { name = "mis07_func_80200200", vram = 0x80200200, size = 0x2c },
+    { name = "mis07_func_8020022C", vram = 0x8020022c, size = 0x1c },
+    { name = "mis07_func_80200248", vram = 0x80200248, size = 0x64 },
+    { name = "mis07_func_802002AC", vram = 0x802002ac, size = 0x24 },
+    { name = "mis07_func_802002D0", vram = 0x802002d0, size = 0xc },
+    { name = "mis07_func_802002DC", vram = 0x802002dc, size = 0x24 },
+]
+
+[[section]]
+name = ".mis08"
+rom = 0x1ec288
+vram = 0x801fd150
+size = 0x3900
+
+functions = [
+    { name = "mis08_func_801FD2C8", vram = 0x801fd2c8, size = 0xd4 },
+    { name = "mis08_func_801FD39C", vram = 0x801fd39c, size = 0x2d8 },
+    { name = "mis08_func_801FD674", vram = 0x801fd674, size = 0x374 },
+    { name = "mis08_func_801FD9E8", vram = 0x801fd9e8, size = 0x2ef8 },
+    { name = "mis08_func_802008E0", vram = 0x802008e0, size = 0x2c },
+    { name = "mis08_func_8020090C", vram = 0x8020090c, size = 0x2c },
+    { name = "mis08_func_80200938", vram = 0x80200938, size = 0x1c },
+    { name = "mis08_func_80200954", vram = 0x80200954, size = 0x64 },
+    { name = "mis08_func_802009B8", vram = 0x802009b8, size = 0x24 },
+    { name = "mis08_func_802009DC", vram = 0x802009dc, size = 0x34 },
+    { name = "mis08_func_80200A10", vram = 0x80200a10, size = 0xc },
+    { name = "mis08_func_80200A1C", vram = 0x80200a1c, size = 0x24 },
+]
+
+[[section]]
+name = ".mis09"
+rom = 0x1efb88
+vram = 0x801fd150
+size = 0x14b8
+
+functions = [
+    { name = "mis09_func_801FD248", vram = 0x801fd248, size = 0x108c },
+    { name = "mis09_func_801FE2D4", vram = 0x801fe2d4, size = 0x168 },
+    { name = "mis09_func_801FE43C", vram = 0x801fe43c, size = 0x2c },
+    { name = "mis09_func_801FE468", vram = 0x801fe468, size = 0x2c },
+    { name = "mis09_func_801FE494", vram = 0x801fe494, size = 0x1c },
+    { name = "mis09_func_801FE4B0", vram = 0x801fe4b0, size = 0x24 },
+    { name = "mis09_func_801FE4D4", vram = 0x801fe4d4, size = 0x34 },
+    { name = "mis09_func_801FE508", vram = 0x801fe508, size = 0xc },
+    { name = "mis09_func_801FE514", vram = 0x801fe514, size = 0x24 },
+    { name = "mis09_func_801FE538", vram = 0x801fe538, size = 0xbc },
+]
+
+[[section]]
+name = ".mis10"
+rom = 0x1f1040
+vram = 0x801fd150
+size = 0x46d8
+
+functions = [
+    { name = "mis10_func_801FD3B8", vram = 0x801fd3b8, size = 0x34 },
+    { name = "mis10_func_801FD3EC", vram = 0x801fd3ec, size = 0xd4 },
+    { name = "mis10_func_801FD4C0", vram = 0x801fd4c0, size = 0x408 },
+    { name = "mis10_func_801FD8C8", vram = 0x801fd8c8, size = 0x3e1c },
+    { name = "mis10_func_802016E4", vram = 0x802016e4, size = 0x2c },
+    { name = "mis10_func_80201710", vram = 0x80201710, size = 0x8 },
+    { name = "mis10_func_80201718", vram = 0x80201718, size = 0x2c },
+    { name = "mis10_func_80201744", vram = 0x80201744, size = 0x1c },
+    { name = "mis10_func_80201760", vram = 0x80201760, size = 0x64 },
+    { name = "mis10_func_802017C4", vram = 0x802017c4, size = 0x24 },
+    { name = "mis10_func_802017E8", vram = 0x802017e8, size = 0xc },
+    { name = "mis10_func_802017F4", vram = 0x802017f4, size = 0x24 },
+]
+
+[[section]]
+name = ".mis11"
+rom = 0x1f5718
+vram = 0x801fd150
+size = 0x2ac8
+
+functions = [
+    { name = "mis11_func_801FD268", vram = 0x801fd268, size = 0x394 },
+    { name = "mis11_func_801FD5FC", vram = 0x801fd5fc, size = 0x580 },
+    { name = "mis11_func_801FDB7C", vram = 0x801fdb7c, size = 0x1e58 },
+    { name = "mis11_func_801FF9D4", vram = 0x801ff9d4, size = 0xd4 },
+    { name = "mis11_func_801FFAA8", vram = 0x801ffaa8, size = 0x2c },
+    { name = "mis11_func_801FFAD4", vram = 0x801ffad4, size = 0x2c },
+    { name = "mis11_func_801FFB00", vram = 0x801ffb00, size = 0x1c },
+    { name = "mis11_func_801FFB1C", vram = 0x801ffb1c, size = 0x64 },
+    { name = "mis11_func_801FFB80", vram = 0x801ffb80, size = 0x24 },
+    { name = "mis11_func_801FFBA4", vram = 0x801ffba4, size = 0x34 },
+    { name = "mis11_func_801FFBD8", vram = 0x801ffbd8, size = 0xc },
+    { name = "mis11_func_801FFBE4", vram = 0x801ffbe4, size = 0x24 },
+]
+
+[[section]]
+name = ".mis12"
+rom = 0x1f81e0
+vram = 0x801fd150
+size = 0x2b48
+
+functions = [
+    { name = "mis12_func_801FD2D0", vram = 0x801fd2d0, size = 0x158 },
+    { name = "mis12_func_801FD428", vram = 0x801fd428, size = 0x318 },
+    { name = "mis12_func_801FD740", vram = 0x801fd740, size = 0x2314 },
+    { name = "mis12_func_801FFA54", vram = 0x801ffa54, size = 0xd4 },
+    { name = "mis12_func_801FFB28", vram = 0x801ffb28, size = 0x2c },
+    { name = "mis12_func_801FFB54", vram = 0x801ffb54, size = 0x2c },
+    { name = "mis12_func_801FFB80", vram = 0x801ffb80, size = 0x1c },
+    { name = "mis12_func_801FFB9C", vram = 0x801ffb9c, size = 0x64 },
+    { name = "mis12_func_801FFC00", vram = 0x801ffc00, size = 0x24 },
+    { name = "mis12_func_801FFC24", vram = 0x801ffc24, size = 0x34 },
+    { name = "mis12_func_801FFC58", vram = 0x801ffc58, size = 0xc },
+    { name = "mis12_func_801FFC64", vram = 0x801ffc64, size = 0x24 },
+]
+
+[[section]]
+name = ".mis13"
+rom = 0x1fad28
+vram = 0x801fd150
+size = 0x1be0
+
+functions = [
+    { name = "mis13_func_801FD268", vram = 0x801fd268, size = 0xe0 },
+    { name = "mis13_func_801FD348", vram = 0x801fd348, size = 0x1bc },
+    { name = "mis13_func_801FD504", vram = 0x801fd504, size = 0x130 },
+    { name = "mis13_func_801FD634", vram = 0x801fd634, size = 0x14b4 },
+    { name = "mis13_func_801FEAE8", vram = 0x801feae8, size = 0xd4 },
+    { name = "mis13_func_801FEBBC", vram = 0x801febbc, size = 0x2c },
+    { name = "mis13_func_801FEBE8", vram = 0x801febe8, size = 0x2c },
+    { name = "mis13_func_801FEC14", vram = 0x801fec14, size = 0x1c },
+    { name = "mis13_func_801FEC30", vram = 0x801fec30, size = 0x64 },
+    { name = "mis13_func_801FEC94", vram = 0x801fec94, size = 0x24 },
+    { name = "mis13_func_801FECB8", vram = 0x801fecb8, size = 0x34 },
+    { name = "mis13_func_801FECEC", vram = 0x801fecec, size = 0xc },
+    { name = "mis13_func_801FECF8", vram = 0x801fecf8, size = 0x24 },
+]
+
+[[section]]
+name = ".mis14"
+rom = 0x1fc908
+vram = 0x801fd150
+size = 0x1fb0
+
+functions = [
+    { name = "mis14_func_801FD2B8", vram = 0x801fd2b8, size = 0x118 },
+    { name = "mis14_func_801FD3D0", vram = 0x801fd3d0, size = 0x3dc },
+    { name = "mis14_func_801FD7AC", vram = 0x801fd7ac, size = 0x1710 },
+    { name = "mis14_func_801FEEBC", vram = 0x801feebc, size = 0xd4 },
+    { name = "mis14_func_801FEF90", vram = 0x801fef90, size = 0x2c },
+    { name = "mis14_func_801FEFBC", vram = 0x801fefbc, size = 0x2c },
+    { name = "mis14_func_801FEFE8", vram = 0x801fefe8, size = 0x1c },
+    { name = "mis14_func_801FF004", vram = 0x801ff004, size = 0x24 },
+    { name = "mis14_func_801FF028", vram = 0x801ff028, size = 0x34 },
+    { name = "mis14_func_801FF05C", vram = 0x801ff05c, size = 0x64 },
+    { name = "mis14_func_801FF0C0", vram = 0x801ff0c0, size = 0xc },
+    { name = "mis14_func_801FF0CC", vram = 0x801ff0cc, size = 0x24 },
+]
+
+[[section]]
+name = ".mis15"
+rom = 0x1fe8b8
+vram = 0x801fd150
+size = 0x4528
+
+functions = [
+    { name = "mis15_func_801FD310", vram = 0x801fd310, size = 0x368 },
+    { name = "mis15_func_801FD678", vram = 0x801fd678, size = 0x2e4 },
+    { name = "mis15_func_801FD95C", vram = 0x801fd95c, size = 0x3a44 },
+    { name = "mis15_func_802013A0", vram = 0x802013a0, size = 0x34 },
+    { name = "mis15_func_802013D4", vram = 0x802013d4, size = 0xd4 },
+    { name = "mis15_func_802014A8", vram = 0x802014a8, size = 0x2c },
+    { name = "mis15_func_802014D4", vram = 0x802014d4, size = 0x2c },
+    { name = "mis15_func_80201500", vram = 0x80201500, size = 0x1c },
+    { name = "mis15_func_8020151C", vram = 0x8020151c, size = 0x64 },
+    { name = "mis15_func_80201580", vram = 0x80201580, size = 0x90 },
+    { name = "mis15_func_80201610", vram = 0x80201610, size = 0x24 },
+    { name = "mis15_func_80201634", vram = 0x80201634, size = 0xc },
+    { name = "mis15_func_80201640", vram = 0x80201640, size = 0x24 },
+]
+
+[[section]]
+name = ".mis16"
+rom = 0x202de0
+vram = 0x801fd150
+size = 0x2b18
+
+functions = [
+    { name = "mis16_func_801FD298", vram = 0x801fd298, size = 0x27c },
+    { name = "mis16_func_801FD514", vram = 0x801fd514, size = 0x204 },
+    { name = "mis16_func_801FD718", vram = 0x801fd718, size = 0x21fc },
+    { name = "mis16_func_801FF914", vram = 0x801ff914, size = 0xd4 },
+    { name = "mis16_func_801FF9E8", vram = 0x801ff9e8, size = 0x2c },
+    { name = "mis16_func_801FFA14", vram = 0x801ffa14, size = 0x2c },
+    { name = "mis16_func_801FFA40", vram = 0x801ffa40, size = 0x1c },
+    { name = "mis16_func_801FFA5C", vram = 0x801ffa5c, size = 0x24 },
+    { name = "mis16_func_801FFA80", vram = 0x801ffa80, size = 0x34 },
+    { name = "mis16_func_801FFAB4", vram = 0x801ffab4, size = 0xc },
+    { name = "mis16_func_801FFAC0", vram = 0x801ffac0, size = 0x24 },
+    { name = "mis16_func_801FFAE4", vram = 0x801ffae4, size = 0x10c },
+    { name = "mis16_func_801FFBF0", vram = 0x801ffbf0, size = 0x64 },
+]
+
+[[section]]
+name = ".mis17"
+rom = 0x2058f8
+vram = 0x801fd150
+size = 0x27a0
+
+functions = [
+    { name = "mis17_func_801FD2C0", vram = 0x801fd2c0, size = 0x2cc },
+    { name = "mis17_func_801FD58C", vram = 0x801fd58c, size = 0x1a8 },
+    { name = "mis17_func_801FD734", vram = 0x801fd734, size = 0x1f78 },
+    { name = "mis17_func_801FF6AC", vram = 0x801ff6ac, size = 0xd4 },
+    { name = "mis17_func_801FF780", vram = 0x801ff780, size = 0x2c },
+    { name = "mis17_func_801FF7AC", vram = 0x801ff7ac, size = 0x2c },
+    { name = "mis17_func_801FF7D8", vram = 0x801ff7d8, size = 0x1c },
+    { name = "mis17_func_801FF7F4", vram = 0x801ff7f4, size = 0x64 },
+    { name = "mis17_func_801FF858", vram = 0x801ff858, size = 0x24 },
+    { name = "mis17_func_801FF87C", vram = 0x801ff87c, size = 0x34 },
+    { name = "mis17_func_801FF8B0", vram = 0x801ff8b0, size = 0xc },
+    { name = "mis17_func_801FF8BC", vram = 0x801ff8bc, size = 0x24 },
+]
+
+[[section]]
+name = ".mis18"
+rom = 0x208098
+vram = 0x801fd150
+size = 0x35a8
+
+functions = [
+    { name = "mis18_func_801FD2A8", vram = 0x801fd2a8, size = 0x2e8 },
+    { name = "mis18_func_801FD590", vram = 0x801fd590, size = 0x2f60 },
+    { name = "mis18_func_802004F0", vram = 0x802004f0, size = 0x34 },
+    { name = "mis18_func_80200524", vram = 0x80200524, size = 0xd4 },
+    { name = "mis18_func_802005F8", vram = 0x802005f8, size = 0x2c },
+    { name = "mis18_func_80200624", vram = 0x80200624, size = 0x2c },
+    { name = "mis18_func_80200650", vram = 0x80200650, size = 0x1c },
+    { name = "mis18_func_8020066C", vram = 0x8020066c, size = 0x1c },
+    { name = "mis18_func_80200688", vram = 0x80200688, size = 0x24 },
+    { name = "mis18_func_802006AC", vram = 0x802006ac, size = 0xc },
+    { name = "mis18_func_802006B8", vram = 0x802006b8, size = 0x24 },
+    { name = "mis18_func_802006DC", vram = 0x802006dc, size = 0x8 },
+]
+
+[[section]]
+name = ".mis19"
+rom = 0x20b640
+vram = 0x801fd150
+size = 0x17b0
+
+functions = [
+    { name = "mis19_func_801FD240", vram = 0x801fd240, size = 0x144 },
+    { name = "mis19_func_801FD384", vram = 0x801fd384, size = 0x1374 },
+    { name = "mis19_func_801FE6F8", vram = 0x801fe6f8, size = 0xd4 },
+    { name = "mis19_func_801FE7CC", vram = 0x801fe7cc, size = 0x2c },
+    { name = "mis19_func_801FE7F8", vram = 0x801fe7f8, size = 0x2c },
+    { name = "mis19_func_801FE824", vram = 0x801fe824, size = 0x1c },
+    { name = "mis19_func_801FE840", vram = 0x801fe840, size = 0x1c },
+    { name = "mis19_func_801FE85C", vram = 0x801fe85c, size = 0x24 },
+    { name = "mis19_func_801FE880", vram = 0x801fe880, size = 0x34 },
+    { name = "mis19_func_801FE8B4", vram = 0x801fe8b4, size = 0xc },
+    { name = "mis19_func_801FE8C0", vram = 0x801fe8c0, size = 0x24 },
+    { name = "mis19_func_801FE8E4", vram = 0x801fe8e4, size = 0x8 },
+]
+
+[[section]]
+name = ".mis20"
+rom = 0x20cdf0
+vram = 0x801fd150
+size = 0x13e0
+
+functions = [
+    { name = "mis20_func_801FD230", vram = 0x801fd230, size = 0xf0 },
+    { name = "mis20_func_801FD320", vram = 0x801fd320, size = 0xd98 },
+    { name = "mis20_func_801FE0B8", vram = 0x801fe0b8, size = 0x168 },
+    { name = "mis20_func_801FE220", vram = 0x801fe220, size = 0xd4 },
+    { name = "mis20_func_801FE2F4", vram = 0x801fe2f4, size = 0x2c },
+    { name = "mis20_func_801FE320", vram = 0x801fe320, size = 0x2c },
+    { name = "mis20_func_801FE34C", vram = 0x801fe34c, size = 0x1c },
+    { name = "mis20_func_801FE368", vram = 0x801fe368, size = 0x24 },
+    { name = "mis20_func_801FE38C", vram = 0x801fe38c, size = 0x34 },
+    { name = "mis20_func_801FE3C0", vram = 0x801fe3c0, size = 0xc },
+    { name = "mis20_func_801FE3CC", vram = 0x801fe3cc, size = 0x24 },
+    { name = "mis20_func_801FE3F0", vram = 0x801fe3f0, size = 0x130 },
+]
+
+[[section]]
+name = ".mis21"
+rom = 0x20e1d0
+vram = 0x801fd150
+size = 0x1c58
+
+functions = [
+    { name = "mis21_func_801FD228", vram = 0x801fd228, size = 0x118 },
+    { name = "mis21_func_801FD340", vram = 0x801fd340, size = 0x300 },
+    { name = "mis21_func_801FD640", vram = 0x801fd640, size = 0x1524 },
+    { name = "mis21_func_801FEB64", vram = 0x801feb64, size = 0xd4 },
+    { name = "mis21_func_801FEC38", vram = 0x801fec38, size = 0x2c },
+    { name = "mis21_func_801FEC64", vram = 0x801fec64, size = 0x2c },
+    { name = "mis21_func_801FEC90", vram = 0x801fec90, size = 0x1c },
+    { name = "mis21_func_801FECAC", vram = 0x801fecac, size = 0x64 },
+    { name = "mis21_func_801FED10", vram = 0x801fed10, size = 0x24 },
+    { name = "mis21_func_801FED34", vram = 0x801fed34, size = 0x34 },
+    { name = "mis21_func_801FED68", vram = 0x801fed68, size = 0xc },
+    { name = "mis21_func_801FED74", vram = 0x801fed74, size = 0x24 },
+]
+
+[[section]]
+name = ".mis22"
+rom = 0x20fe28
+vram = 0x801fd150
+size = 0x14f8
+
+functions = [
+    { name = "mis22_func_801FD248", vram = 0x801fd248, size = 0xf48 },
+    { name = "mis22_func_801FE190", vram = 0x801fe190, size = 0x16c },
+    { name = "mis22_func_801FE2FC", vram = 0x801fe2fc, size = 0x2c },
+    { name = "mis22_func_801FE328", vram = 0x801fe328, size = 0x2c },
+    { name = "mis22_func_801FE354", vram = 0x801fe354, size = 0x1c },
+    { name = "mis22_func_801FE370", vram = 0x801fe370, size = 0xd8 },
+    { name = "mis22_func_801FE448", vram = 0x801fe448, size = 0x24 },
+    { name = "mis22_func_801FE46C", vram = 0x801fe46c, size = 0x34 },
+    { name = "mis22_func_801FE4A0", vram = 0x801fe4a0, size = 0xc },
+    { name = "mis22_func_801FE4AC", vram = 0x801fe4ac, size = 0x24 },
+    { name = "mis22_func_801FE4D0", vram = 0x801fe4d0, size = 0xa8 },
+    { name = "mis22_func_801FE578", vram = 0x801fe578, size = 0xc0 },
+]
+
+[[section]]
+name = ".mis23"
+rom = 0x211320
+vram = 0x801fd150
+size = 0x4480
+
+functions = [
+    { name = "mis23_func_801FD358", vram = 0x801fd358, size = 0x1c8 },
+    { name = "mis23_func_801FD520", vram = 0x801fd520, size = 0x380 },
+    { name = "mis23_func_801FD8A0", vram = 0x801fd8a0, size = 0x3a88 },
+    { name = "mis23_func_80201328", vram = 0x80201328, size = 0x34 },
+    { name = "mis23_func_8020135C", vram = 0x8020135c, size = 0xd4 },
+    { name = "mis23_func_80201430", vram = 0x80201430, size = 0x2c },
+    { name = "mis23_func_8020145C", vram = 0x8020145c, size = 0x60 },
+    { name = "mis23_func_802014BC", vram = 0x802014bc, size = 0x2c },
+    { name = "mis23_func_802014E8", vram = 0x802014e8, size = 0x1c },
+    { name = "mis23_func_80201504", vram = 0x80201504, size = 0x64 },
+    { name = "mis23_func_80201568", vram = 0x80201568, size = 0x24 },
+    { name = "mis23_func_8020158C", vram = 0x8020158c, size = 0xc },
+    { name = "mis23_func_80201598", vram = 0x80201598, size = 0x24 },
+]
+
+[[section]]
+name = ".mis24"
+rom = 0x2157a0
+vram = 0x801fd150
+size = 0x3400
+
+functions = [
+    { name = "mis24_func_801FD298", vram = 0x801fd298, size = 0x34 },
+    { name = "mis24_func_801FD2CC", vram = 0x801fd2cc, size = 0xd4 },
+    { name = "mis24_func_801FD3A0", vram = 0x801fd3a0, size = 0x4e0 },
+    { name = "mis24_func_801FD880", vram = 0x801fd880, size = 0x658 },
+    { name = "mis24_func_801FDED8", vram = 0x801fded8, size = 0x253c },
+    { name = "mis24_func_80200414", vram = 0x80200414, size = 0x2c },
+    { name = "mis24_func_80200440", vram = 0x80200440, size = 0x2c },
+    { name = "mis24_func_8020046C", vram = 0x8020046c, size = 0x1c },
+    { name = "mis24_func_80200488", vram = 0x80200488, size = 0x64 },
+    { name = "mis24_func_802004EC", vram = 0x802004ec, size = 0x24 },
+    { name = "mis24_func_80200510", vram = 0x80200510, size = 0xc },
+    { name = "mis24_func_8020051C", vram = 0x8020051c, size = 0x24 },
+]
+
+[[section]]
+name = ".mis25"
+rom = 0x218ba0
+vram = 0x801fd150
+size = 0xc90
+
+functions = [
+    { name = "mis25_func_801FD270", vram = 0x801fd270, size = 0x7a0 },
+    { name = "mis25_func_801FDA10", vram = 0x801fda10, size = 0xe4 },
+    { name = "mis25_func_801FDAF4", vram = 0x801fdaf4, size = 0x2c },
+    { name = "mis25_func_801FDB20", vram = 0x801fdb20, size = 0x2c },
+    { name = "mis25_func_801FDB4C", vram = 0x801fdb4c, size = 0x1c },
+    { name = "mis25_func_801FDB68", vram = 0x801fdb68, size = 0x1c },
+    { name = "mis25_func_801FDB84", vram = 0x801fdb84, size = 0x24 },
+    { name = "mis25_func_801FDBA8", vram = 0x801fdba8, size = 0x34 },
+    { name = "mis25_func_801FDBDC", vram = 0x801fdbdc, size = 0xc },
+    { name = "mis25_func_801FDBE8", vram = 0x801fdbe8, size = 0x24 },
+    { name = "mis25_func_801FDC0C", vram = 0x801fdc0c, size = 0xec },
+    { name = "mis25_func_801FDCF8", vram = 0x801fdcf8, size = 0x8 },
+    { name = "mis25_func_801FDD00", vram = 0x801fdd00, size = 0xcc },
+]
+
+[[section]]
+name = ".mis26"
+rom = 0x219830
+vram = 0x801fd150
+size = 0x9e8
+
+functions = [
+    { name = "mis26_func_801FD1F8", vram = 0x801fd1f8, size = 0x644 },
+    { name = "mis26_func_801FD83C", vram = 0x801fd83c, size = 0x8c },
+    { name = "mis26_func_801FD8C8", vram = 0x801fd8c8, size = 0x2c },
+    { name = "mis26_func_801FD8F4", vram = 0x801fd8f4, size = 0x2c },
+    { name = "mis26_func_801FD920", vram = 0x801fd920, size = 0x1c },
+    { name = "mis26_func_801FD93C", vram = 0x801fd93c, size = 0x9c },
+    { name = "mis26_func_801FD9D8", vram = 0x801fd9d8, size = 0x24 },
+    { name = "mis26_func_801FD9FC", vram = 0x801fd9fc, size = 0x34 },
+    { name = "mis26_func_801FDA30", vram = 0x801fda30, size = 0xc },
+    { name = "mis26_func_801FDA3C", vram = 0x801fda3c, size = 0x24 },
+    { name = "mis26_func_801FDA60", vram = 0x801fda60, size = 0x54 },
+    { name = "mis26_func_801FDAB4", vram = 0x801fdab4, size = 0x70 },
+]
+
+[[section]]
+name = ".mis27"
+rom = 0x21a218
+vram = 0x801fd150
+size = 0xbd0
+
+functions = [
+    { name = "mis27_func_801FD200", vram = 0x801fd200, size = 0x79c },
+    { name = "mis27_func_801FD99C", vram = 0x801fd99c, size = 0xa4 },
+    { name = "mis27_func_801FDA40", vram = 0x801fda40, size = 0x2c },
+    { name = "mis27_func_801FDA6C", vram = 0x801fda6c, size = 0x2c },
+    { name = "mis27_func_801FDA98", vram = 0x801fda98, size = 0x1c },
+    { name = "mis27_func_801FDAB4", vram = 0x801fdab4, size = 0xc8 },
+    { name = "mis27_func_801FDB7C", vram = 0x801fdb7c, size = 0x24 },
+    { name = "mis27_func_801FDBA0", vram = 0x801fdba0, size = 0x34 },
+    { name = "mis27_func_801FDBD4", vram = 0x801fdbd4, size = 0xc },
+    { name = "mis27_func_801FDBE0", vram = 0x801fdbe0, size = 0x24 },
+    { name = "mis27_func_801FDC04", vram = 0x801fdc04, size = 0x9c },
+    { name = "mis27_func_801FDCA0", vram = 0x801fdca0, size = 0x6c },
+]
+
+[[section]]
+name = ".mis28"
+rom = 0x21ade8
+vram = 0x801fd150
+size = 0xe90
+
+functions = [
+    { name = "mis28_func_801FD238", vram = 0x801fd238, size = 0x8a4 },
+    { name = "mis28_func_801FDADC", vram = 0x801fdadc, size = 0x164 },
+    { name = "mis28_func_801FDC40", vram = 0x801fdc40, size = 0xd0 },
+    { name = "mis28_func_801FDD10", vram = 0x801fdd10, size = 0x2c },
+    { name = "mis28_func_801FDD3C", vram = 0x801fdd3c, size = 0x2c },
+    { name = "mis28_func_801FDD68", vram = 0x801fdd68, size = 0x1c },
+    { name = "mis28_func_801FDD84", vram = 0x801fdd84, size = 0x24 },
+    { name = "mis28_func_801FDDA8", vram = 0x801fdda8, size = 0x34 },
+    { name = "mis28_func_801FDDDC", vram = 0x801fdddc, size = 0xc },
+    { name = "mis28_func_801FDDE8", vram = 0x801fdde8, size = 0x24 },
+    { name = "mis28_func_801FDE0C", vram = 0x801fde0c, size = 0x12c },
+    { name = "mis28_func_801FDF38", vram = 0x801fdf38, size = 0x98 },
+]
+
+[[section]]
+name = ".mis29"
+rom = 0x21bc78
+vram = 0x801fd150
+size = 0x8e8
+
+functions = [
+    { name = "mis29_func_801FD1F8", vram = 0x801fd1f8, size = 0x680 },
+    { name = "mis29_func_801FD878", vram = 0x801fd878, size = 0x64 },
+    { name = "mis29_func_801FD8DC", vram = 0x801fd8dc, size = 0x2c },
+    { name = "mis29_func_801FD908", vram = 0x801fd908, size = 0x2c },
+    { name = "mis29_func_801FD934", vram = 0x801fd934, size = 0x1c },
+    { name = "mis29_func_801FD950", vram = 0x801fd950, size = 0x1c },
+    { name = "mis29_func_801FD96C", vram = 0x801fd96c, size = 0x24 },
+    { name = "mis29_func_801FD990", vram = 0x801fd990, size = 0x34 },
+    { name = "mis29_func_801FD9C4", vram = 0x801fd9c4, size = 0xc },
+    { name = "mis29_func_801FD9D0", vram = 0x801fd9d0, size = 0x24 },
+    { name = "mis29_func_801FD9F4", vram = 0x801fd9f4, size = 0x2c },
+    { name = "mis29_func_801FDA20", vram = 0x801fda20, size = 0x8 },
+]
+
+[[section]]
+name = ".mis30"
+rom = 0x21c560
+vram = 0x801fd150
+size = 0x1888
+
+functions = [
+    { name = "mis30_func_801FD250", vram = 0x801fd250, size = 0x324 },
+    { name = "mis30_func_801FD574", vram = 0x801fd574, size = 0x11b0 },
+    { name = "mis30_func_801FE724", vram = 0x801fe724, size = 0xd4 },
+    { name = "mis30_func_801FE7F8", vram = 0x801fe7f8, size = 0x2c },
+    { name = "mis30_func_801FE824", vram = 0x801fe824, size = 0x2c },
+    { name = "mis30_func_801FE850", vram = 0x801fe850, size = 0x1c },
+    { name = "mis30_func_801FE86C", vram = 0x801fe86c, size = 0x1c },
+    { name = "mis30_func_801FE888", vram = 0x801fe888, size = 0x50 },
+    { name = "mis30_func_801FE8D8", vram = 0x801fe8d8, size = 0x34 },
+    { name = "mis30_func_801FE90C", vram = 0x801fe90c, size = 0xc },
+    { name = "mis30_func_801FE918", vram = 0x801fe918, size = 0x24 },
+    { name = "mis30_func_801FE93C", vram = 0x801fe93c, size = 0x8 },
+    { name = "mis30_func_801FE944", vram = 0x801fe944, size = 0x80 },
+]
+
+[[section]]
+name = ".mis31"
+rom = 0x21dde8
+vram = 0x801fd150
+size = 0x2b48
+
+functions = [
+    { name = "mis31_func_801FD250", vram = 0x801fd250, size = 0x250 },
+    { name = "mis31_func_801FD4A0", vram = 0x801fd4a0, size = 0x48c },
+    { name = "mis31_func_801FD92C", vram = 0x801fd92c, size = 0x2124 },
+    { name = "mis31_func_801FFA50", vram = 0x801ffa50, size = 0xd4 },
+    { name = "mis31_func_801FFB24", vram = 0x801ffb24, size = 0x2c },
+    { name = "mis31_func_801FFB50", vram = 0x801ffb50, size = 0x2c },
+    { name = "mis31_func_801FFB7C", vram = 0x801ffb7c, size = 0x1c },
+    { name = "mis31_func_801FFB98", vram = 0x801ffb98, size = 0x64 },
+    { name = "mis31_func_801FFBFC", vram = 0x801ffbfc, size = 0x24 },
+    { name = "mis31_func_801FFC20", vram = 0x801ffc20, size = 0x34 },
+    { name = "mis31_func_801FFC54", vram = 0x801ffc54, size = 0xc },
+    { name = "mis31_func_801FFC60", vram = 0x801ffc60, size = 0x24 },
+]
+
+[[section]]
+name = ".mis32"
+rom = 0x220930
+vram = 0x801fd150
+size = 0x16b8
+
+functions = [
+    { name = "mis32_func_801FD238", vram = 0x801fd238, size = 0x29c },
+    { name = "mis32_func_801FD4D4", vram = 0x801fd4d4, size = 0xf88 },
+    { name = "mis32_func_801FE45C", vram = 0x801fe45c, size = 0xd4 },
+    { name = "mis32_func_801FE530", vram = 0x801fe530, size = 0x2c },
+    { name = "mis32_func_801FE55C", vram = 0x801fe55c, size = 0x2c },
+    { name = "mis32_func_801FE588", vram = 0x801fe588, size = 0x1c },
+    { name = "mis32_func_801FE5A4", vram = 0x801fe5a4, size = 0x1c },
+    { name = "mis32_func_801FE5C0", vram = 0x801fe5c0, size = 0x24 },
+    { name = "mis32_func_801FE5E4", vram = 0x801fe5e4, size = 0x3c },
+    { name = "mis32_func_801FE620", vram = 0x801fe620, size = 0xc },
+    { name = "mis32_func_801FE62C", vram = 0x801fe62c, size = 0x24 },
+    { name = "mis32_func_801FE650", vram = 0x801fe650, size = 0x34 },
+    { name = "mis32_func_801FE684", vram = 0x801fe684, size = 0x8 },
+    { name = "mis32_func_801FE68C", vram = 0x801fe68c, size = 0xcc },
+    { name = "mis32_func_801FE758", vram = 0x801fe758, size = 0x8 },
+    { name = "mis32_func_801FE760", vram = 0x801fe760, size = 0x94 },
+]
+
+[[section]]
+name = ".mis33"
+rom = 0x221fe8
+vram = 0x801fd150
+size = 0x1070
+
+functions = [
+    { name = "mis33_func_801FD210", vram = 0x801fd210, size = 0xb6c },
+    { name = "mis33_func_801FDD7C", vram = 0x801fdd7c, size = 0x12c },
+    { name = "mis33_func_801FDEA8", vram = 0x801fdea8, size = 0x2c },
+    { name = "mis33_func_801FDED4", vram = 0x801fded4, size = 0x2c },
+    { name = "mis33_func_801FDF00", vram = 0x801fdf00, size = 0x1c },
+    { name = "mis33_func_801FDF1C", vram = 0x801fdf1c, size = 0x1c },
+    { name = "mis33_func_801FDF38", vram = 0x801fdf38, size = 0x24 },
+    { name = "mis33_func_801FDF5C", vram = 0x801fdf5c, size = 0x34 },
+    { name = "mis33_func_801FDF90", vram = 0x801fdf90, size = 0xc },
+    { name = "mis33_func_801FDF9C", vram = 0x801fdf9c, size = 0x24 },
+    { name = "mis33_func_801FDFC0", vram = 0x801fdfc0, size = 0x8 },
+    { name = "mis33_func_801FDFC8", vram = 0x801fdfc8, size = 0x8 },
+    { name = "mis33_func_801FDFD0", vram = 0x801fdfd0, size = 0x80 },
+    { name = "mis33_func_801FE050", vram = 0x801fe050, size = 0x8c },
+    { name = "mis33_func_801FE0DC", vram = 0x801fe0dc, size = 0xc0 },
+]
+
+[[section]]
+name = ".mis34"
+rom = 0x223058
+vram = 0x801fd150
+size = 0x8a0
+
+functions = [
+    { name = "mis34_func_801FD1F0", vram = 0x801fd1f0, size = 0x630 },
+    { name = "mis34_func_801FD820", vram = 0x801fd820, size = 0x6c },
+    { name = "mis34_func_801FD88C", vram = 0x801fd88c, size = 0x2c },
+    { name = "mis34_func_801FD8B8", vram = 0x801fd8b8, size = 0x2c },
+    { name = "mis34_func_801FD8E4", vram = 0x801fd8e4, size = 0x1c },
+    { name = "mis34_func_801FD900", vram = 0x801fd900, size = 0x1c },
+    { name = "mis34_func_801FD91C", vram = 0x801fd91c, size = 0x24 },
+    { name = "mis34_func_801FD940", vram = 0x801fd940, size = 0x34 },
+    { name = "mis34_func_801FD974", vram = 0x801fd974, size = 0xc },
+    { name = "mis34_func_801FD980", vram = 0x801fd980, size = 0x24 },
+    { name = "mis34_func_801FD9A4", vram = 0x801fd9a4, size = 0x8 },
+    { name = "mis34_func_801FD9AC", vram = 0x801fd9ac, size = 0x34 },
+]
+
+[[section]]
+name = ".mis35"
+rom = 0x2238f8
+vram = 0x801fd150
+size = 0xf28
+
+functions = [
+    { name = "mis35_func_801FD210", vram = 0x801fd210, size = 0xc1c },
+    { name = "mis35_func_801FDE2C", vram = 0x801fde2c, size = 0xa8 },
+    { name = "mis35_func_801FDED4", vram = 0x801fded4, size = 0x2c },
+    { name = "mis35_func_801FDF00", vram = 0x801fdf00, size = 0x2c },
+    { name = "mis35_func_801FDF2C", vram = 0x801fdf2c, size = 0x1c },
+    { name = "mis35_func_801FDF48", vram = 0x801fdf48, size = 0x1c },
+    { name = "mis35_func_801FDF64", vram = 0x801fdf64, size = 0x24 },
+    { name = "mis35_func_801FDF88", vram = 0x801fdf88, size = 0x34 },
+    { name = "mis35_func_801FDFBC", vram = 0x801fdfbc, size = 0xc },
+    { name = "mis35_func_801FDFC8", vram = 0x801fdfc8, size = 0x24 },
+    { name = "mis35_func_801FDFEC", vram = 0x801fdfec, size = 0x8 },
+    { name = "mis35_func_801FDFF4", vram = 0x801fdff4, size = 0x70 },
+]
+
+[[section]]
+name = ".mis36"
+rom = 0x224820
+vram = 0x801fd150
+size = 0x15c0
+
+functions = [
+    { name = "mis36_func_801FD218", vram = 0x801fd218, size = 0x174 },
+    { name = "mis36_func_801FD38C", vram = 0x801fd38c, size = 0x10b8 },
+    { name = "mis36_func_801FE444", vram = 0x801fe444, size = 0x60 },
+    { name = "mis36_func_801FE4A4", vram = 0x801fe4a4, size = 0x2c },
+    { name = "mis36_func_801FE4D0", vram = 0x801fe4d0, size = 0x2c },
+    { name = "mis36_func_801FE4FC", vram = 0x801fe4fc, size = 0x1c },
+    { name = "mis36_func_801FE518", vram = 0x801fe518, size = 0xc8 },
+    { name = "mis36_func_801FE5E0", vram = 0x801fe5e0, size = 0x24 },
+    { name = "mis36_func_801FE604", vram = 0x801fe604, size = 0x34 },
+    { name = "mis36_func_801FE638", vram = 0x801fe638, size = 0xc },
+    { name = "mis36_func_801FE644", vram = 0x801fe644, size = 0x24 },
+    { name = "mis36_func_801FE668", vram = 0x801fe668, size = 0x98 },
+]
+
+[[section]]
+name = ".mis37"
+rom = 0x225de0
+vram = 0x801fd150
+size = 0x1348
+
+functions = [
+    { name = "mis37_func_801FD200", vram = 0x801fd200, size = 0x1fc },
+    { name = "mis37_func_801FD3FC", vram = 0x801fd3fc, size = 0xe30 },
+    { name = "mis37_func_801FE22C", vram = 0x801fe22c, size = 0xd4 },
+    { name = "mis37_func_801FE300", vram = 0x801fe300, size = 0x2c },
+    { name = "mis37_func_801FE32C", vram = 0x801fe32c, size = 0x2c },
+    { name = "mis37_func_801FE358", vram = 0x801fe358, size = 0x1c },
+    { name = "mis37_func_801FE374", vram = 0x801fe374, size = 0x1c },
+    { name = "mis37_func_801FE390", vram = 0x801fe390, size = 0x84 },
+    { name = "mis37_func_801FE414", vram = 0x801fe414, size = 0x3c },
+    { name = "mis37_func_801FE450", vram = 0x801fe450, size = 0xc },
+    { name = "mis37_func_801FE45C", vram = 0x801fe45c, size = 0x24 },
+    { name = "mis37_func_801FE480", vram = 0x801fe480, size = 0x8 },
+]
+
+[[section]]
+name = ".mis38"
+rom = 0x227128
+vram = 0x801fd150
+size = 0xb70
+
+functions = [
+    { name = "mis38_func_801FD208", vram = 0x801fd208, size = 0x83c },
+    { name = "mis38_func_801FDA44", vram = 0x801fda44, size = 0xc0 },
+    { name = "mis38_func_801FDB04", vram = 0x801fdb04, size = 0x2c },
+    { name = "mis38_func_801FDB30", vram = 0x801fdb30, size = 0x2c },
+    { name = "mis38_func_801FDB5C", vram = 0x801fdb5c, size = 0x1c },
+    { name = "mis38_func_801FDB78", vram = 0x801fdb78, size = 0x1c },
+    { name = "mis38_func_801FDB94", vram = 0x801fdb94, size = 0x24 },
+    { name = "mis38_func_801FDBB8", vram = 0x801fdbb8, size = 0x34 },
+    { name = "mis38_func_801FDBEC", vram = 0x801fdbec, size = 0xc },
+    { name = "mis38_func_801FDBF8", vram = 0x801fdbf8, size = 0x24 },
+    { name = "mis38_func_801FDC1C", vram = 0x801fdc1c, size = 0x8 },
+    { name = "mis38_func_801FDC24", vram = 0x801fdc24, size = 0x88 },
+]
+
+[[section]]
+name = ".mis39"
+rom = 0x227c98
+vram = 0x801fd150
+size = 0x1838
+
+functions = [
+    { name = "mis39_func_801FD230", vram = 0x801fd230, size = 0x188 },
+    { name = "mis39_func_801FD3B8", vram = 0x801fd3b8, size = 0x1140 },
+    { name = "mis39_func_801FE4F8", vram = 0x801fe4f8, size = 0x60 },
+    { name = "mis39_func_801FE558", vram = 0x801fe558, size = 0x2c },
+    { name = "mis39_func_801FE584", vram = 0x801fe584, size = 0x2c },
+    { name = "mis39_func_801FE5B0", vram = 0x801fe5b0, size = 0x1c },
+    { name = "mis39_func_801FE5CC", vram = 0x801fe5cc, size = 0xa8 },
+    { name = "mis39_func_801FE674", vram = 0x801fe674, size = 0x24 },
+    { name = "mis39_func_801FE698", vram = 0x801fe698, size = 0x34 },
+    { name = "mis39_func_801FE6CC", vram = 0x801fe6cc, size = 0xc },
+    { name = "mis39_func_801FE6D8", vram = 0x801fe6d8, size = 0x24 },
+    { name = "mis39_func_801FE6FC", vram = 0x801fe6fc, size = 0x6c },
+    { name = "mis39_func_801FE768", vram = 0x801fe768, size = 0xfc },
+    { name = "mis39_func_801FE864", vram = 0x801fe864, size = 0x108 },
+]
+
+[[section]]
+name = ".mis40"
+rom = 0x2294d0
+vram = 0x801fd150
+size = 0x1290
+
+functions = [
+    { name = "mis40_func_801FD208", vram = 0x801fd208, size = 0xd98 },
+    { name = "mis40_func_801FDFA0", vram = 0x801fdfa0, size = 0x190 },
+    { name = "mis40_func_801FE130", vram = 0x801fe130, size = 0x2c },
+    { name = "mis40_func_801FE15C", vram = 0x801fe15c, size = 0x78 },
+    { name = "mis40_func_801FE1D4", vram = 0x801fe1d4, size = 0x34 },
+    { name = "mis40_func_801FE208", vram = 0x801fe208, size = 0x1c },
+    { name = "mis40_func_801FE224", vram = 0x801fe224, size = 0x84 },
+    { name = "mis40_func_801FE2A8", vram = 0x801fe2a8, size = 0x2c },
+    { name = "mis40_func_801FE2D4", vram = 0x801fe2d4, size = 0x24 },
+    { name = "mis40_func_801FE2F8", vram = 0x801fe2f8, size = 0x34 },
+    { name = "mis40_func_801FE32C", vram = 0x801fe32c, size = 0xc },
+    { name = "mis40_func_801FE338", vram = 0x801fe338, size = 0x24 },
+    { name = "mis40_func_801FE35C", vram = 0x801fe35c, size = 0x70 },
+]
+
+[[section]]
+name = ".mis41"
+rom = 0x22a760
+vram = 0x801fd150
+size = 0x1af0
+
+functions = [
+    { name = "mis41_func_801FD1D8", vram = 0x801fd1d8, size = 0x21c },
+    { name = "mis41_func_801FD3F4", vram = 0x801fd3f4, size = 0x280 },
+    { name = "mis41_func_801FD674", vram = 0x801fd674, size = 0xb08 },
+    { name = "mis41_func_801FE17C", vram = 0x801fe17c, size = 0xd8 },
+    { name = "mis41_func_801FE254", vram = 0x801fe254, size = 0x538 },
+    { name = "mis41_func_801FE78C", vram = 0x801fe78c, size = 0x2c },
+    { name = "mis41_func_801FE7B8", vram = 0x801fe7b8, size = 0x5c },
+    { name = "mis41_func_801FE814", vram = 0x801fe814, size = 0x88 },
+    { name = "mis41_func_801FE89C", vram = 0x801fe89c, size = 0x1c },
+    { name = "mis41_func_801FE8B8", vram = 0x801fe8b8, size = 0xe8 },
+    { name = "mis41_func_801FE9A0", vram = 0x801fe9a0, size = 0x2c },
+    { name = "mis41_func_801FE9CC", vram = 0x801fe9cc, size = 0x24 },
+    { name = "mis41_func_801FE9F0", vram = 0x801fe9f0, size = 0x34 },
+    { name = "mis41_func_801FEA24", vram = 0x801fea24, size = 0xc },
+    { name = "mis41_func_801FEA30", vram = 0x801fea30, size = 0x24 },
+    { name = "mis41_func_801FEA54", vram = 0x801fea54, size = 0xd4 },
+    { name = "mis41_func_801FEB28", vram = 0x801feb28, size = 0xec },
+]
+
+[[section]]
+name = ".mis42"
+rom = 0x22c250
+vram = 0x801fd150
+size = 0x12c8
+
+functions = [
+    { name = "mis42_func_801FD1F0", vram = 0x801fd1f0, size = 0x1b8 },
+    { name = "mis42_func_801FD3A8", vram = 0x801fd3a8, size = 0x158 },
+    { name = "mis42_func_801FD500", vram = 0x801fd500, size = 0x5d0 },
+    { name = "mis42_func_801FDAD0", vram = 0x801fdad0, size = 0x104 },
+    { name = "mis42_func_801FDBD4", vram = 0x801fdbd4, size = 0xbc },
+    { name = "mis42_func_801FDC90", vram = 0x801fdc90, size = 0xd8 },
+    { name = "mis42_func_801FDD68", vram = 0x801fdd68, size = 0x2a4 },
+    { name = "mis42_func_801FE00C", vram = 0x801fe00c, size = 0x2c },
+    { name = "mis42_func_801FE038", vram = 0x801fe038, size = 0x3c },
+    { name = "mis42_func_801FE074", vram = 0x801fe074, size = 0x88 },
+    { name = "mis42_func_801FE0FC", vram = 0x801fe0fc, size = 0x1c },
+    { name = "mis42_func_801FE118", vram = 0x801fe118, size = 0x2c },
+    { name = "mis42_func_801FE144", vram = 0x801fe144, size = 0x24 },
+    { name = "mis42_func_801FE168", vram = 0x801fe168, size = 0x34 },
+    { name = "mis42_func_801FE19C", vram = 0x801fe19c, size = 0xc },
+    { name = "mis42_func_801FE1A8", vram = 0x801fe1a8, size = 0x24 },
+    { name = "mis42_func_801FE1CC", vram = 0x801fe1cc, size = 0xf0 },
+    { name = "mis42_func_801FE2BC", vram = 0x801fe2bc, size = 0x114 },
+]
+
+[[section]]
+name = ".mis43"
+rom = 0x22d518
+vram = 0x801fd150
+size = 0x8d0
+
+functions = [
+    { name = "mis43_func_801FD1E0", vram = 0x801fd1e0, size = 0x65c },
+    { name = "mis43_func_801FD83C", vram = 0x801fd83c, size = 0xb8 },
+    { name = "mis43_func_801FD8F4", vram = 0x801fd8f4, size = 0x2c },
+    { name = "mis43_func_801FD920", vram = 0x801fd920, size = 0x2c },
+    { name = "mis43_func_801FD94C", vram = 0x801fd94c, size = 0x1c },
+    { name = "mis43_func_801FD968", vram = 0x801fd968, size = 0x1c },
+    { name = "mis43_func_801FD984", vram = 0x801fd984, size = 0x24 },
+    { name = "mis43_func_801FD9A8", vram = 0x801fd9a8, size = 0x34 },
+    { name = "mis43_func_801FD9DC", vram = 0x801fd9dc, size = 0xc },
+    { name = "mis43_func_801FD9E8", vram = 0x801fd9e8, size = 0x24 },
+    { name = "mis43_func_801FDA0C", vram = 0x801fda0c, size = 0x8 },
+    { name = "mis43_func_801FDA14", vram = 0x801fda14, size = 0xc },
 ]
 

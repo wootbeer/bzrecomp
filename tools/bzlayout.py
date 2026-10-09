@@ -61,3 +61,36 @@ KNOWN_NAMES = {
     # (0x8003C700-0x8003EB3C). Implemented natively (src/game/debug_output.cpp).
     0x8003C700: "bz_debug_write",
 }
+
+# Mission code blobs. ovl1 (the in-game module) loads one per mission into a
+# fixed slot: func_80198D30 indexes the ROM-address table at 0x801F9C90 (ovl1
+# data) by mission, and the caller (ovl1_func_80123D68) reads 0x5400 bytes to
+# 0x801FD150 and calls through the blob's first word (its entry point). Blob
+# code calls into ovl1 and the boot segment.
+BLOB_SLOT = 0x801FD150
+BLOB_SLOT_SIZE = 0x5400
+BLOB_TABLE_ROM = 0x801F9C90 - 0x80030230  # in ovl1's data
+BLOB_COUNT = 94  # entries; 44 distinct blobs (missions share some)
+BLOB_LAST_END = 0x22DDE8  # the last blob runs to the next asset
+
+
+def blob_starts(rom):
+    """The distinct blob ROM addresses, in ROM order."""
+    starts = set()
+    for k in range(BLOB_COUNT):
+        starts.add(word(rom, BLOB_TABLE_ROM + 4 * k) & 0x0FFFFFFF)
+    return sorted(starts)
+
+
+def all_sections(rom):
+    """SECTIONS plus one section per mission blob ("misNN", in ROM order),
+    and each section's parent (whose code it may call besides boot)."""
+    secs = list(SECTIONS)
+    parents = {}
+    starts = blob_starts(rom)
+    for i, a in enumerate(starts):
+        end = starts[i + 1] if i + 1 < len(starts) else BLOB_LAST_END
+        name = f"mis{i:02d}"
+        secs.append((name, a, BLOB_SLOT, None, end, BLOB_SLOT + BLOB_SLOT_SIZE))
+        parents[name] = "ovl1"
+    return secs, parents
