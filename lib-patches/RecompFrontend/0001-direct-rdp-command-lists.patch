@@ -1,8 +1,17 @@
 diff --git a/recompui/include/recompui/renderer.h b/recompui/include/recompui/renderer.h
-index 33f79ab..371e091 100644
+index 33f79ab..ac14424 100644
 --- a/recompui/include/recompui/renderer.h
 +++ b/recompui/include/recompui/renderer.h
-@@ -27,6 +27,7 @@ namespace recompui {
+@@ -1,6 +1,8 @@
+ #pragma once
+ 
+ #include <unordered_set>
++#include <utility>
++#include <vector>
+ #include <filesystem>
+ 
+ #include "common/rt64_user_configuration.h"
+@@ -27,6 +29,7 @@ namespace recompui {
  
              void enable_instant_present() override;
              void send_dl(const OSTask *task) override;
@@ -10,19 +19,80 @@ index 33f79ab..371e091 100644
              void send_dummy_workload(uint32_t fb_address) override;
              void update_screen() override;
              void shutdown() override;
+@@ -38,7 +41,11 @@ namespace recompui {
+             std::unordered_set<std::string> enabled_texture_packs;
+             std::unordered_set<std::string> secondary_disabled_texture_packs;
+             uint32_t last_refresh_rate = 0;
++            // Raw RDP lists held for the next graphics task (see send_rdp_list).
++            std::vector<std::pair<uint32_t, uint32_t>> pending_rdp_lists;
++            int vis_since_gfx_task = 0;
+ 
++            void flush_rdp_lists(bool keep_final_sync);
+             void check_texture_pack_actions();
+             void check_refresh_rate_changes();
+         };
 diff --git a/recompui/src/renderer/rt64_render_context.cpp b/recompui/src/renderer/rt64_render_context.cpp
-index a7954c7..1bb6883 100644
+index a7954c7..76c08f1 100644
 --- a/recompui/src/renderer/rt64_render_context.cpp
 +++ b/recompui/src/renderer/rt64_render_context.cpp
-@@ -344,6 +344,11 @@ void renderer::RT64Context::send_dl(const OSTask* task) {
+@@ -339,12 +339,48 @@ renderer::RT64Context::~RT64Context() = default;
+ 
+ void renderer::RT64Context::send_dl(const OSTask* task) {
+     check_texture_pack_actions();
++    // Raw RDP lists sent since the last task (a game clearing the depth buffer
++    // and the next framebuffer with osDpSetNextBuffer) run in this task's
++    // workload, so RT64 sees the depth clear next to the drawing that uses it.
++    flush_rdp_lists(false);
++    vis_since_gfx_task = 0;
+     app->state->rsp->reset();
+     app->interpreter->loadUCodeGBI(task->t.ucode & 0x3FFFFFF, task->t.ucode_data & 0x3FFFFFF, true);
      app->processDisplayLists(app->core.RDRAM, task->t.data_ptr & 0x3FFFFFF, 0, true);
  }
  
++// A raw RDP command list (osDpSetNextBuffer). Each ends with a full sync,
++// which makes RT64 submit it as a workload of its own. A game that clears the
++// depth buffer and the next framebuffer this way before drawing the frame with
++// a graphics task then renders wrongly: RT64 only recognizes a depth clear in
++// the same workload as the draws using it. So lists are held and run at the
++// start of the next graphics task, without their final sync. A screen drawn
++// with raw lists alone (no task for a while) is flushed at the VI update.
 +void renderer::RT64Context::send_rdp_list(uint32_t start, uint32_t end) {
++    pending_rdp_lists.emplace_back(start & 0x3FFFFFF, end & 0x3FFFFFF);
++}
++
++void renderer::RT64Context::flush_rdp_lists(bool keep_final_sync) {
++    if (pending_rdp_lists.empty()) {
++        return;
++    }
 +    check_texture_pack_actions();
-+    app->processDisplayLists(app->core.RDRAM, start & 0x3FFFFFF, end & 0x3FFFFFF, false);
++    for (size_t i = 0; i < pending_rdp_lists.size(); i++) {
++        auto [start, end] = pending_rdp_lists[i];
++        bool last = (i + 1 == pending_rdp_lists.size());
++        if (!(last && keep_final_sync) && end >= start + 8) {
++            uint32_t w0 = *reinterpret_cast<const uint32_t*>(app->core.RDRAM + end - 8);
++            if ((w0 >> 24) == 0xE9) { // G_RDPFULLSYNC
++                end -= 8;
++            }
++        }
++        app->processDisplayLists(app->core.RDRAM, start, end, false);
++    }
++    pending_rdp_lists.clear();
 +}
 +
  void renderer::RT64Context::send_dummy_workload(uint32_t fb_address) {
++    flush_rdp_lists(true);
      app->state->listProcessBegin();
      app->state->rdp->setColorImage(G_IM_FMT_RGBA, G_IM_SIZ_16b, 320, fb_address);
+     // G_AD_DISABLE | G_CD_MAGICSQ | G_CK_NONE | G_TC_FILT | G_TF_BILERP | G_TT_NONE | G_TL_TILE | G_TD_CLAMP | G_TP_PERSP | G_CYC_FILL | G_PM_NPRIMITIVE
+@@ -356,6 +392,11 @@ void renderer::RT64Context::send_dummy_workload(uint32_t fb_address) {
+ }
+ 
+ void renderer::RT64Context::update_screen() {
++    // Tasks come every few VIs while a game draws with them (more when it
++    // slows down); past that, it's drawing with raw lists alone.
++    if (++vis_since_gfx_task > 10) {
++        flush_rdp_lists(true);
++    }
+     check_refresh_rate_changes();
+     app->updateScreen();
+ }

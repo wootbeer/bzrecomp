@@ -81,11 +81,14 @@ extern "C" void bz_on_rom_read(uint8_t* rdram, int32_t dst, uint32_t pi_addr, ui
             continue;
         }
         if (loaded_module != i) {
-            unload_overlays(kModuleSlot, kSlotSize);
+            // The mission blob goes first: it belonged to module 1, and the
+            // runtime refuses to unload a range touching a still-loaded section
+            // (the module slot ends where the blob slot starts).
             if (loaded_blob != 0) {
-                unload_overlays(kBlobSlot, kBlobSlotSize);  // it belonged to module 1
+                unload_overlays(kBlobSlot, kBlobSlotSize);
                 loaded_blob = 0;
             }
+            unload_overlays(kModuleSlot, kSlotSize);
             load_overlays(m.rom_start, kModuleSlot, m.rom_end - m.rom_start);
             loaded_module = i;
             fprintf(stderr, "[bz] module %d loaded\n", i);

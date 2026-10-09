@@ -1,0 +1,25 @@
+diff --git a/src/hle/rt64_state.cpp b/src/hle/rt64_state.cpp
+index 3ee241f..3830004 100644
+--- a/src/hle/rt64_state.cpp
++++ b/src/hle/rt64_state.cpp
+@@ -568,11 +568,17 @@ namespace RT64 {
+                 // Detect a fast path by checking if the framebuffer pair previous to the current one only did fill rects.
+                 // This is a very good indicator that the previous framebuffer pair was only intended to clear the depth
+                 // buffer and we can skip the color to depth conversion.
+-                int previousFbPairIndex = workload.currentFramebufferPairIndex() - 1;
+-                if (previousFbPairIndex >= 0) {
++                // Look back across the whole run of fill-only pairs: a game may clear the depth buffer and then the
++                // color buffer (two fill-only pairs) before drawing.
++                for (int previousFbPairIndex = workload.currentFramebufferPairIndex() - 1; previousFbPairIndex >= 0; previousFbPairIndex--) {
+                     FramebufferPair &previousFbPair = workload.fbPairs[previousFbPairIndex];
+-                    if (previousFbPair.fillRectOnly && (previousFbPair.colorImage.address == depthImg.address) && (previousFbPair.colorImage.siz == G_IM_SIZ_16b)) {
++                    if (!previousFbPair.fillRectOnly) {
++                        break;
++                    }
++
++                    if ((previousFbPair.colorImage.address == depthImg.address) && (previousFbPair.colorImage.siz == G_IM_SIZ_16b)) {
+                         previousFbPair.fastPaths.clearDepthOnly = true;
++                        break;
+                     }
+                 }
+             }
