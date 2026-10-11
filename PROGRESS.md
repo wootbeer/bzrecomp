@@ -42,6 +42,10 @@ leave the game's own behaviour, look and balance alone.
   buffer and next framebuffer this way before each 3D frame; those lists run in
   the next task's RT64 workload so the depth clear is recognized
   (`lib-patches/N64ModernRuntime`, `RecompFrontend`, `rt64/0002`).
+- **In-game video mode.** Menus run 320x240, but in-game the game switches to a
+  640x240 mode (pixels half as wide as they are tall). RT64 assumed square
+  pixels, so the picture came out squashed to 2.67:1 and Expand did nothing;
+  `lib-patches/rt64/0004` takes the VI's pixel shape into account.
 - Smaller fixes in `battlezone.us.rev0.toml`: crt0's `break` (main returns under
   the runtime), uncached KSEG1 address constants, the developers' debug-output
   call (printed to stdout, `src/game/debug_output.cpp`), stubs for the game's
@@ -49,8 +53,9 @@ leave the game's own behaviour, look and balance alone.
 
 ## Known issues
 
-- A thin vertical strip at the right edge of the 3D view shows different
-  content (probably the screen-edge scissor, as BattleTanx had).
+- With Aspect Ratio set to Expand, HUD panels the game parks just off-screen
+  (the unit menu on the left, a weapon panel on the right) show at the edges.
+  Original is clean.
 - Once, with a Controller Pak save present, a decompress got a bad destination
   (0xA0000000) and crashed. Not reproduced since the module unload-order fix.
 - Windows not built or tested yet. No widescreen/HUD anchoring, no frame-time
