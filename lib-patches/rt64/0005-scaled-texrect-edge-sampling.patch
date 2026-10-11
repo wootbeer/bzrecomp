@@ -1,0 +1,30 @@
+diff --git a/src/hle/rt64_rdp.cpp b/src/hle/rt64_rdp.cpp
+index a10c11a..732f357 100644
+--- a/src/hle/rt64_rdp.cpp
++++ b/src/hle/rt64_rdp.cpp
+@@ -1275,6 +1275,25 @@ namespace RT64 {
+         float v1 = ult / 32.0f + vFractionOffset;
+         float u2 = lrs / 32.0f;
+         float v2 = lrt / 32.0f + vFractionOffset;
++
++        // The RDP samples a rectangle once per pixel at the pixel's corner, so the last row and column
++        // sample one step before the far edge. Filtered at a higher resolution, the far edge would reach
++        // that last step and blend in the texels past it, which belong to other images in packed
++        // textures (a font's next row of glyphs). End the interpolated range at the last native sample.
++        // Rects at 1:1 scale are sampled at native positions already (see Upscale2D::ScaledOnly).
++        const bool identityScale = ((dsdx == 1024) || (dsdx == -1024)) && ((dtdy == 1024) || (dtdy == -1024));
++        const bool bilerpRect = !usesCopyMode && !usesFillMode && !identityScale && (otherMode.textFilt() != G_TF_POINT);
++        if (bilerpRect) {
++            const float stepS = dsdx / 1024.0f;
++            const float stepT = dtdy / 1024.0f;
++            if ((flip ? rectHeight : rectWidth) > 1) {
++                u2 -= stepS;
++            }
++
++            if ((flip ? rectWidth : rectHeight) > 1) {
++                v2 -= stepT;
++            }
++        }
+         triTcFloats.emplace_back(u1);
+         triTcFloats.emplace_back(v1);
+         triTcFloats.emplace_back(flip ? u1 : u2);

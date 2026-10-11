@@ -1,0 +1,46 @@
+diff --git a/src/render/rt64_framebuffer_renderer.cpp b/src/render/rt64_framebuffer_renderer.cpp
+index 9fae0d4..53ba5e6 100644
+--- a/src/render/rt64_framebuffer_renderer.cpp
++++ b/src/render/rt64_framebuffer_renderer.cpp
+@@ -1435,6 +1435,14 @@ namespace RT64 {
+         const float scissorRatio = static_cast<float>(fbPair.scissorRect.width(false, true)) / static_cast<float>(fbPair.scissorRect.height(false, true));
+         const bool adjustRatio = (abs((scissorRatio / p.aspectRatioSource) - 1.0f) < SimilarityPercentage);
+         const float aspectRatioScale = adjustRatio ? (p.aspectRatioTarget / p.aspectRatioSource) : 1.0f;
++
++        // Draws count as spanning the screen when they leave a small margin on each side of the framebuffer
++        // pair's scissor: some games clip the 3D view and full-screen overlays a few pixels in from the edges
++        // (inside the TV overscan) while clearing the whole width in the same frame.
++        const int32_t fullWidthMargin = (fbPair.scissorRect.lrx - fbPair.scissorRect.ulx) / 32;
++        auto spansScissorWidth = [&](const FixedRect &rect) {
++            return (rect.ulx <= (fbPair.scissorRect.ulx + fullWidthMargin)) && (rect.lrx >= (fbPair.scissorRect.lrx - fullWidthMargin));
++        };
+         InstanceDrawCall instanceDrawCall;
+         interop::RenderIndices renderIndices;
+         uint32_t globalCallIndex = 0;
+@@ -1488,7 +1496,7 @@ namespace RT64 {
+                 // The call's scissor spans the whole width of the framebuffer pair scissor. Custom origin must not be in use to be able to use the stretched viewport.
+                 const auto &viewport = drawData.rspViewports[proj.transformsIndex];
+                 FixedRect intersectionRect = proj.scissorRect.intersection(viewport.rect(viewportClipRatios));
+-                bool coversWholeWidth = !intersectionRect.isEmpty() && (intersectionRect.ulx <= fbPair.scissorRect.ulx) && (intersectionRect.lrx >= fbPair.scissorRect.lrx);
++                bool coversWholeWidth = !intersectionRect.isEmpty() && spansScissorWidth(intersectionRect);
+                 bool horizontalRatio = !intersectionRect.isEmpty() && (intersectionRect.width(true, true) > intersectionRect.height(true, true));
+                 bool useWideViewport = (viewportOrigin == G_EX_ORIGIN_NONE) && coversWholeWidth && horizontalRatio;
+                 if (useWideViewport) {
+@@ -1539,7 +1547,7 @@ namespace RT64 {
+                     int32_t horizontalMisalignment = 0;
+ 
+                     // A rect that spans the whole width of the scissor.
+-                    if ((call.callDesc.rect.ulx <= fbPair.scissorRect.ulx) && (call.callDesc.rect.lrx >= fbPair.scissorRect.lrx)) {
++                    if (spansScissorWidth(call.callDesc.rect)) {
+                         invRatioScale = 1.0f;
+                     }
+                     // A regular rectangle that should correct its misalignment.
+@@ -1644,7 +1652,7 @@ namespace RT64 {
+ 
+                             // The call's scissor spans the whole width of the framebuffer pair scissor. The rect must not be using extended origins.
+                             const bool regularOrigins = (call.callDesc.rectLeftOrigin == G_EX_ORIGIN_NONE) && (call.callDesc.rectRightOrigin == G_EX_ORIGIN_NONE);
+-                            const bool coversScissorWidth = regularOrigins && (call.callDesc.rect.ulx <= fbPair.scissorRect.ulx) && (call.callDesc.rect.lrx >= fbPair.scissorRect.lrx);
++                            const bool coversScissorWidth = regularOrigins && spansScissorWidth(call.callDesc.rect);
+                             if ((tileCopiesUsed || coversScissorWidth || call.callDesc.rectAspect == G_EX_ASPECT_STRETCH) && (call.callDesc.rectAspect != G_EX_ASPECT_ADJUST)) {
+                                 invRatioScale = 1.0f;
+                             }

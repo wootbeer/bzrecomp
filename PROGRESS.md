@@ -46,6 +46,15 @@ leave the game's own behaviour, look and balance alone.
   640x240 mode (pixels half as wide as they are tall). RT64 assumed square
   pixels, so the picture came out squashed to 2.67:1 and Expand did nothing;
   `lib-patches/rt64/0004` takes the VI's pixel shape into account.
+- **Widescreen (Expand).** The game clips its 3D view and full-screen layers
+  16 pixels in from each edge, inside the TV overscan, but clears the whole
+  width. RT64 only widened draws that span the full width, so the 3D view stayed
+  4:3 between widened layers. `lib-patches/rt64/0006` lets draws that stop
+  within a small margin of the edges count as full-width.
+- **Text bleed.** Scaled, filtered rectangles (the in-game font) blended in
+  the next row of their packed texture when upscaled, leaving dots under each
+  letter; `lib-patches/rt64/0005` ends the sampled range at the last row the
+  RDP itself samples.
 - Smaller fixes in `battlezone.us.rev0.toml`: crt0's `break` (main returns under
   the runtime), uncached KSEG1 address constants, the developers' debug-output
   call (printed to stdout, `src/game/debug_output.cpp`), stubs for the game's
@@ -53,9 +62,11 @@ leave the game's own behaviour, look and balance alone.
 
 ## Known issues
 
-- With Aspect Ratio set to Expand, HUD panels the game parks just off-screen
-  (the unit menu on the left, a weapon panel on the right) show at the edges.
-  Original is clean.
+- In the turret view of the first campaign mission, the ground stops about 40
+  pixels above the bottom of the screen, leaving a black band with the top edge
+  of the turret model along the bottom. It isn't RT64 clipping (disabling all
+  near clipping changes nothing), so it's most likely the game's own view;
+  not yet confirmed against real hardware.
 - Once, with a Controller Pak save present, a decompress got a bad destination
   (0xA0000000) and crashed. Not reproduced since the module unload-order fix.
 - Windows not built or tested yet. No widescreen/HUD anchoring, no frame-time
