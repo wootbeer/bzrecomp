@@ -44,6 +44,13 @@ namespace {
     constexpr int kBlobTableEntries = 94;
     constexpr uint32_t kLastBlobEnd = 0x22DDE8;
     uint32_t loaded_blob = 0;
+    uint32_t loaded_blob_end = 0;
+    // The blob module 1 had loaded when the pause menu (module 2) took the
+    // module slot. Module 2 is small and leaves the blob slot alone, and
+    // unpausing reloads only module 1's code, not the blob, so it's registered
+    // again then. Module 0 (the menus) does overwrite it.
+    uint32_t paused_blob = 0;
+    uint32_t paused_blob_end = 0;
 
     // A blob load: register just that blob (a 0x5400 read also covers the
     // start of the next one).
@@ -64,6 +71,7 @@ namespace {
             unload_overlays(kBlobSlot, kBlobSlotSize);
             load_overlays(rom, kBlobSlot, end - rom);
             loaded_blob = rom;
+            loaded_blob_end = end;
             fprintf(stderr, "[bz] mission blob 0x%06X loaded\n", rom);
         }
     }
@@ -86,12 +94,26 @@ extern "C" void bz_on_rom_read(uint8_t* rdram, int32_t dst, uint32_t pi_addr, ui
             // (the module slot ends where the blob slot starts).
             if (loaded_blob != 0) {
                 unload_overlays(kBlobSlot, kBlobSlotSize);
+                paused_blob = loaded_blob;
+                paused_blob_end = loaded_blob_end;
                 loaded_blob = 0;
             }
             unload_overlays(kModuleSlot, kSlotSize);
             load_overlays(m.rom_start, kModuleSlot, m.rom_end - m.rom_start);
             loaded_module = i;
             fprintf(stderr, "[bz] module %d loaded\n", i);
+
+            if (i == 0) {
+                paused_blob = 0;  // the menus overwrite the blob slot
+            }
+            else if (i == 1 && paused_blob != 0) {
+                // Back from the pause menu: the blob is still in memory.
+                load_overlays(paused_blob, kBlobSlot, paused_blob_end - paused_blob);
+                loaded_blob = paused_blob;
+                loaded_blob_end = paused_blob_end;
+                paused_blob = 0;
+                fprintf(stderr, "[bz] mission blob 0x%06X registered again\n", loaded_blob);
+            }
         }
         return;
     }
