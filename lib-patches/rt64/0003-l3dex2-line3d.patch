@@ -1,0 +1,141 @@
+diff --git a/src/gbi/rt64_gbi_l3dex2.cpp b/src/gbi/rt64_gbi_l3dex2.cpp
+index 9938e75..e279c26 100644
+--- a/src/gbi/rt64_gbi_l3dex2.cpp
++++ b/src/gbi/rt64_gbi_l3dex2.cpp
+@@ -8,8 +8,14 @@
+ 
+ namespace RT64 {
+     namespace GBI_L3DEX2 {
++        // gSPLineW3D(v0, v1, wd, flag): vertex indices (times 2) in bits 16-23 and
++        // 8-15 of w0, and the width in bits 0-7: (wd + 3) / 2 pixels wide, so a
++        // plain gSPLine3D (wd = 0) is 1.5 pixels.
+         void line3D(State *state, DisplayList **dl) {
+-            assert(false);
++            const uint32_t v0 = (*dl)->p0(16, 8) / 2;
++            const uint32_t v1 = (*dl)->p0(8, 8) / 2;
++            const uint32_t wd = (*dl)->p0(0, 8);
++            state->rsp->drawLine(v0, v1, (float(wd) + 3.0f) / 4.0f);
+         }
+ 
+         void setup(GBI *gbi) {
+diff --git a/src/hle/rt64_rsp.cpp b/src/hle/rt64_rsp.cpp
+index 1da2550..31a8d9b 100644
+--- a/src/hle/rt64_rsp.cpp
++++ b/src/hle/rt64_rsp.cpp
+@@ -4,7 +4,9 @@
+ 
+ #include "rt64_rsp.h"
+ 
++#include <algorithm>
+ #include <cassert>
++#include <cmath>
+ 
+ #include "../include/rt64_extended_gbi.h"
+ #include "common/rt64_common.h"
+@@ -1168,6 +1170,93 @@ namespace RT64 {
+         drawIndexedTri(a, b, c, false);
+     }
+ 
++    // A copy of a vertex (all attributes) whose screen XY is replaced, the way
++    // G_MWO_POINT_XYSCREEN does it. Returns the copy's global index.
++    uint32_t RSP::copyVertexWithScreenXY(uint32_t globalIndex, float x, float y) {
++        const int workloadCursor = state->ext.workloadQueue->writeCursor;
++        Workload &workload = state->ext.workloadQueue->workloads[workloadCursor];
++        auto &d = workload.drawData;
++        const uint32_t newIndex = d.vertexCount();
++        for (int i = 0; i < 3; i++) { d.posFloats.emplace_back(d.posFloats[globalIndex * 3 + i]); }
++        for (int i = 0; i < 3; i++) { d.velFloats.emplace_back(d.velFloats[globalIndex * 3 + i]); }
++        for (int i = 0; i < 4; i++) { d.normColBytes.emplace_back(d.normColBytes[globalIndex * 4 + i]); }
++        for (int i = 0; i < 2; i++) { d.tcFloats.emplace_back(d.tcFloats[globalIndex * 2 + i]); }
++        for (int i = 0; i < 2; i++) { d.tcVelFloats.emplace_back(d.tcVelFloats[globalIndex * 2 + i]); }
++        d.viewProjIndices.emplace_back(d.viewProjIndices[globalIndex]);
++        d.worldIndices.emplace_back(d.worldIndices[globalIndex]);
++        d.fogIndices.emplace_back(d.fogIndices[globalIndex]);
++        d.lightIndices.emplace_back(d.lightIndices[globalIndex]);
++        d.lightCounts.emplace_back(d.lightCounts[globalIndex]);
++        d.lookAtIndices.emplace_back(d.lookAtIndices[globalIndex]);
++        d.posTransformed.emplace_back(d.posTransformed[globalIndex]);
++        d.posScreen.emplace_back(d.posScreen[globalIndex]);
++
++        // Screen XY in the N64's s10.2 format, as the vertex shader expects it.
++        const int16_t sx = int16_t(std::clamp(x * 4.0f, -32768.0f, 32767.0f));
++        const int16_t sy = int16_t(std::clamp(y * 4.0f, -32768.0f, 32767.0f));
++        d.modifyPosUints.emplace_back(newIndex << 1);
++        d.modifyPosUints.emplace_back((uint32_t(uint16_t(sx)) << 16) | uint16_t(sy));
++        d.posScreen[newIndex][0] = sx / 4.0f;
++        d.posScreen[newIndex][1] = sy / 4.0f;
++        return newIndex;
++    }
++
++    // A 3D line (L3DEX2's G_LINE3D) between vertex buffer entries a and b, drawn
++    // as a screen-space quad of the given half width (in N64 screen pixels).
++    void RSP::drawLine(uint32_t a, uint32_t b, float halfWidth) {
++        if ((a >= RSP_MAX_VERTICES) || (b >= RSP_MAX_VERTICES)) {
++            return;
++        }
++
++        const int workloadCursor = state->ext.workloadQueue->writeCursor;
++        Workload &workload = state->ext.workloadQueue->workloads[workloadCursor];
++        const uint32_t ga = indices[a];
++        const uint32_t gb = indices[b];
++
++        // The microcode clips lines against the near plane; skip lines with an
++        // endpoint behind the camera instead.
++        if ((workload.drawData.posTransformed[ga][3] <= 0.0f) || (workload.drawData.posTransformed[gb][3] <= 0.0f)) {
++            return;
++        }
++
++        const hlslpp::float3 pa = workload.drawData.posScreen[ga];
++        const hlslpp::float3 pb = workload.drawData.posScreen[gb];
++        float dx = pb[0] - pa[0];
++        float dy = pb[1] - pa[1];
++        const float len = std::sqrt(dx * dx + dy * dy);
++        if (len < 1e-4f) {
++            dx = 1.0f;
++            dy = 0.0f;
++        }
++        else {
++            dx /= len;
++            dy /= len;
++        }
++
++        const float px = -dy * halfWidth;
++        const float py = dx * halfWidth;
++        const uint32_t a0 = copyVertexWithScreenXY(ga, pa[0] + px, pa[1] + py);
++        const uint32_t a1 = copyVertexWithScreenXY(ga, pa[0] - px, pa[1] - py);
++        const uint32_t b0 = copyVertexWithScreenXY(gb, pb[0] + px, pb[1] + py);
++        const uint32_t b1 = copyVertexWithScreenXY(gb, pb[0] - px, pb[1] - py);
++        used[a] = used[b] = true;
++
++        // Wind both triangles so back-face culling keeps them: drawIndexedTri
++        // treats cross(V, U).z >= 0 as front-facing.
++        const auto &ps = workload.drawData.posScreen;
++        const hlslpp::float3 U = ps[a1] - ps[a0];
++        const hlslpp::float3 V = ps[b0] - ps[a0];
++        const bool frontFacing = (hlslpp::cross(V, U).z >= 0.0f);
++        if (frontFacing) {
++            drawIndexedTri(a0, a1, b0, true);
++            drawIndexedTri(b0, a1, b1, true);
++        }
++        else {
++            drawIndexedTri(a0, b0, a1, true);
++            drawIndexedTri(b0, b1, a1, true);
++        }
++    }
++
+     void RSP::setViewportAlign(uint16_t ori, int16_t offx, int16_t offy) {
+         extended.global.viewportOrigin = ori;
+         extended.global.viewportOffsetX = offx;
+diff --git a/src/hle/rt64_rsp.h b/src/hle/rt64_rsp.h
+index 61bb3b1..7993b11 100644
+--- a/src/hle/rt64_rsp.h
++++ b/src/hle/rt64_rsp.h
+@@ -293,6 +293,8 @@ namespace RT64 {
+         void setTextureImage(uint8_t fmt, uint8_t siz, uint16_t width, uint32_t segAddress);
+         void drawIndexedTri(uint32_t a, uint32_t b, uint32_t c, bool rawGlobalIndices);
+         void drawIndexedTri(uint32_t a, uint32_t b, uint32_t c);
++        void drawLine(uint32_t a, uint32_t b, float halfWidth);
++        uint32_t copyVertexWithScreenXY(uint32_t globalIndex, float x, float y);
+         void setViewportAlign(uint16_t ori, int16_t offx, int16_t offy);
+         void vertexTestZ(uint8_t vtxIndex);
+         void endVertexTestZ();
