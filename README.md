@@ -28,6 +28,11 @@ and plays campaign missions with keyboard or controller. Tested on Linux so far
 (including software Vulkan); Windows builds are set up as in btgarecomp but not
 yet tested. See [PROGRESS.md](PROGRESS.md).
 
+On a gamepad, the default controls put the N64 stick on the right stick
+(vertical axis inverted) and the C buttons on the left stick (click
+for C-Up), with the left trigger as R and the right trigger as Z. Saved
+controls are kept; use "Reset to defaults" on the Controls tab to pick these up.
+
 Like on the N64, a controller holds one pak: the game asks for a Rumble Pak when
 a mission starts while the Controller Pak (saves) is selected. Press B to
 continue without it, or choose the pak per player in Settings > General.

@@ -411,6 +411,28 @@ std::vector<recomp::GameEntry> supported_games = {
     std::abort();
 }
 
+// Gamepad defaults, changed from RecompFrontend's to a layout tested to play
+// well here: the right stick is the N64 stick with its vertical axis inverted,
+// the left stick the C buttons (its click is C-Up), and the
+// triggers swap, the left one R and the right one Z. Only fresh profiles and
+// "Reset to defaults" use these; saved controls are kept. Must run before
+// anything reads the defaults (profiles load with the config).
+static void set_default_controller_mapping() {
+    using recompinput::GameInput;
+    using recompinput::InputField;
+    auto set = recompinput::set_default_mapping_for_controller;
+    set(GameInput::R,          { InputField::controller_analog(SDL_CONTROLLER_AXIS_TRIGGERLEFT, true) });
+    set(GameInput::Z,          { InputField::controller_analog(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, true) });
+    set(GameInput::C_LEFT,     { InputField::controller_analog(SDL_CONTROLLER_AXIS_LEFTX, false), InputField::controller_digital(recompinput::SDL_CONTROLLER_BUTTON_NORTH) });
+    set(GameInput::C_RIGHT,    { InputField::controller_analog(SDL_CONTROLLER_AXIS_LEFTX, true),  InputField::controller_digital(recompinput::SDL_CONTROLLER_BUTTON_EAST) });
+    set(GameInput::C_UP,       { InputField::controller_analog(SDL_CONTROLLER_AXIS_LEFTY, false), InputField::controller_digital(SDL_CONTROLLER_BUTTON_LEFTSTICK) });
+    set(GameInput::C_DOWN,     { InputField::controller_analog(SDL_CONTROLLER_AXIS_LEFTY, true),  InputField::controller_digital(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) });
+    set(GameInput::X_AXIS_NEG, { InputField::controller_analog(SDL_CONTROLLER_AXIS_RIGHTX, false) });
+    set(GameInput::X_AXIS_POS, { InputField::controller_analog(SDL_CONTROLLER_AXIS_RIGHTX, true) });
+    set(GameInput::Y_AXIS_POS, { InputField::controller_analog(SDL_CONTROLLER_AXIS_RIGHTY, true) });
+    set(GameInput::Y_AXIS_NEG, { InputField::controller_analog(SDL_CONTROLLER_AXIS_RIGHTY, false) });
+}
+
 int main(int argc, char** argv) {
     std::set_terminate(report_unhandled_exception_and_abort);
 
@@ -445,6 +467,8 @@ int main(int argc, char** argv) {
     for (const auto& game : supported_games) {
         recomp::register_game(game);
     }
+
+    set_default_controller_mapping();
 
     recompinput::players::set_single_player_mode(true);
 
