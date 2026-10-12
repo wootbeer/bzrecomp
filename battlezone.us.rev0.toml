@@ -221,6 +221,21 @@ func = "ovl1_func_80163FEC"
 before_vram = 0x80164074
 text = "    bz_hud_piece_end(rdram);"
 
+[[patches.hook]]  # queues a string at the queue's count (the weapon panel's and unit menu's)
+func = "func_80033EA0"
+before_vram = 0x80033ea0
+text = "    bz_hud_text_queued(rdram);"
+
+[[patches.hook]]  # queues a string at the queue's count
+func = "func_80032DE4"
+before_vram = 0x80032de4
+text = "    bz_hud_text_queued(rdram);"
+
+[[patches.hook]]  # queues a string at the queue's count
+func = "func_80032F70"
+before_vram = 0x80032f70
+text = "    bz_hud_text_queued(rdram);"
+
 [[patches.hook]]  # addu $a0, $s3, $zero: next line's write pointer
 func = "func_80033604"
 before_vram = 0x80033814

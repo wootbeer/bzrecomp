@@ -42,6 +42,7 @@ void bz_sprites_written(uint8_t* rdram, int drawer, int32_t end);
 void bz_hud_radar_begin(uint8_t* rdram);
 void bz_hud_piece_end(uint8_t* rdram);
 void bz_hud_element_begin(uint8_t* rdram, int32_t element);
+void bz_hud_text_queued(uint8_t* rdram);
 void bz_hud_text_begin(uint8_t* rdram);
 void bz_hud_text_end(uint8_t* rdram);
 void bz_hud_text_line(uint8_t* rdram, int32_t entry, uint64_t* head_reg);

@@ -22,8 +22,10 @@
 //   unit icons and counters, the crosshair, the message box) stay centred.
 // - Text: queued by everything above and drawn together by the boot segment's
 //   func_80033604 (one 0x28-byte queue entry per string, x at +4), called from
-//   func_801BB09C. Each string is anchored by its own x, so a panel's text
-//   follows its panel and a string is never split. It draws through a
+//   func_801BB09C. Each string follows the element that queued it (hooks on
+//   the queuing functions record which side was being drawn), so a panel's
+//   text moves with its panel, labels placed in the 3D view (target names)
+//   stay put, and a string is never split. It draws through a
 //   register copy of the overlay list's write pointer ($s3), so commands go
 //   through that register.
 //
@@ -67,10 +69,6 @@ namespace {
     constexpr int kMainListHead = 0x78;      // F3DEX2
     constexpr int kLineListHead = 0x84;      // L3DEX2 (the radar grid)
     constexpr int kOverlayListHead = 0x90;
-
-    // Text queue entries are in 320-wide coordinates.
-    constexpr int kTextLeftBelow = 107;    // left third
-    constexpr int kTextRightFrom = 220;    // the weapon panel's column
 
     enum class Side { None, Left, Right };
 
@@ -173,11 +171,12 @@ namespace {
         set_list_side(rdram, kOverlayListHead, overlay_side, to);
     }
 
-    Side text_side(int x) {
-        if (x < kTextLeftBelow) return Side::Left;
-        if (x >= kTextRightFrom) return Side::Right;
-        return Side::None;
-    }
+    // The side of the HUD element being drawn (whether or not Expand is on),
+    // and, per text queue slot, the side of the element that queued it.
+    constexpr uint32_t kTextQueue = 0x800BF460;   // 0x28-byte entries
+    constexpr uint32_t kTextQueueCount = 0x8006B150;
+    Side element_side = Side::None;
+    Side queued_side[256];
 }
 
 void bz::set_widescreen_scale(float scale) {
@@ -189,10 +188,12 @@ float bz::get_widescreen_scale() {
 }
 
 extern "C" void bz_hud_radar_begin(uint8_t* rdram) {
+    element_side = Side::Left;
     set_side(rdram, Side::Left);
 }
 
 extern "C" void bz_hud_piece_end(uint8_t* rdram) {
+    element_side = Side::None;
     set_side(rdram, Side::None);
 }
 
@@ -206,7 +207,16 @@ extern "C" void bz_hud_element_begin(uint8_t* rdram, int32_t element) {
     case 0x801623B0: side = Side::Right; break;  // weapon panel
     default: break;
     }
+    element_side = side;
     set_side(rdram, side);
+}
+
+// func_80033EA0 / func_80032DE4 / func_80032F70, which queue a string: it takes the slot at
+// the queue's current count. The string follows the element queuing it, so a
+// panel's text moves with its panel, and text placed in the 3D view (target
+// labels) stays put.
+extern "C" void bz_hud_text_queued(uint8_t* rdram) {
+    queued_side[MEM_BU(0, kseg0(kTextQueueCount)) & 0xFF] = element_side;
 }
 
 // func_801BB09C (the text flush) is about to run for the in-game frame.
@@ -229,12 +239,12 @@ extern "C" void bz_hud_text_line(uint8_t* rdram, int32_t entry, uint64_t* head_r
     if (!text_active) {
         return;
     }
-    int x = (int16_t)MEM_H(4, (gpr)entry);
+    const uint32_t slot = ((uint32_t)entry - kTextQueue) / 0x28;
+    Side to = (slot < 256) ? queued_side[slot] : Side::None;
     if (log_text) {
-        int y = (int16_t)MEM_H(6, (gpr)entry);
-        fprintf(stderr, "[hud text] x %d y %d id %u\n", x, y, (uint16_t)MEM_HU(0, (gpr)entry));
+        int x = (int16_t)MEM_H(4, (gpr)entry), y = (int16_t)MEM_H(6, (gpr)entry);
+        fprintf(stderr, "[hud text] x %d y %d id %u side %d\n", x, y, (uint16_t)MEM_HU(0, (gpr)entry), (int)to);
     }
-    Side to = text_side(x);
     DlWriter dl{ rdram, (gpr)*head_reg };
     write_side(dl, overlay_side, to);
     *head_reg = (uint64_t)dl.head;
@@ -243,6 +253,9 @@ extern "C" void bz_hud_text_line(uint8_t* rdram, int32_t entry, uint64_t* head_r
 
 // func_80033604, after the last string, before it returns the write pointer.
 extern "C" void bz_hud_text_done(uint8_t* rdram, uint64_t* head_reg) {
+    for (Side& side : queued_side) {
+        side = Side::None;
+    }
     if (overlay_side == Side::None) {
         return;
     }
