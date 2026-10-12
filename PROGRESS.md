@@ -59,6 +59,10 @@ leave the game's own behaviour, look and balance alone.
   is anchored as a whole. The unit icons, counters, crosshair and message box
   stay centred. Anchored drawing is clipped to the (widened) 3D view area,
   so HUD pieces the game parks in the TV overscan border stay hidden.
+- **TV-safe frame.** In game, the game clips its view 16 pixels in from the
+  sides and 8 from the top and bottom, which an N64's TV hid in its overscan
+  and a PC display shows as a black frame. RT64 crops it at presentation
+  (`lib-patches/rt64/0007`); the game still renders the same.
 - **Text bleed.** Scaled, filtered rectangles (the in-game font) blended in
   the next row of their packed texture when upscaled, leaving dots under each
   letter; `lib-patches/rt64/0005` ends the sampled range at the last row the

@@ -1,0 +1,23 @@
+diff --git a/src/hle/rt64_vi.cpp b/src/hle/rt64_vi.cpp
+index ea4f3df..09aa035 100644
+--- a/src/hle/rt64_vi.cpp
++++ b/src/hle/rt64_vi.cpp
+@@ -16,6 +16,18 @@ namespace RT64 {
+     // VI
+     
+     hlslpp::float4 VI::viewRectangle() const {
++        // Overscan crop. A TV hides a margin around the picture, and some games keep everything they
++        // draw inside a TV-safe area, leaving a black frame that a PC display shows in full. Battlezone:
++        // Rise of the Black Dogs clips its in-game view (640x240, the only use of that mode here) 16
++        // pixels in from the sides and 8 from the top and bottom: enlarge the view so that frame falls
++        // just outside the window.
++        const hlslpp::uint2 size = fbSize();
++        if ((width == 640) && (size.x == 640) && (size.y == 240)) {
++            const float cropX = 16.0f / 640.0f;
++            const float cropY = 8.0f / 240.0f;
++            return { -cropX / (1.0f - 2.0f * cropX), -cropY / (1.0f - 2.0f * cropY), 1.0f / (1.0f - 2.0f * cropX), 1.0f / (1.0f - 2.0f * cropY) };
++        }
++
+         return { 0.0f, 0.0f, 1.0f, 1.0f };
+     }
+ 

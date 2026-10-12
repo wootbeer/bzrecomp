@@ -54,7 +54,7 @@ namespace {
     // RT64 adds the framebuffer width to right-anchored coordinates
     // (RDP::movedFromOrigin), so they're given relative to the right edge.
     constexpr int kRightShift = -kFbWidth * 4;   // 10.2 fixed point
-    constexpr int kEdgeMargin = 12 * 4;          // moved this much further out
+    constexpr int kEdgeMargin = 4 * 4;           // moved this much further out
     // The game clips its 3D view (and everything else it means to show) 16
     // pixels in from the sides and 8 from the top and bottom, inside the TV's
     // overscan. HUD pieces it parks off-screen sit in that border, so anchored
