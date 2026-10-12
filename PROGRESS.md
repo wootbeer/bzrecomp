@@ -57,7 +57,8 @@ leave the game's own behaviour, look and balance alone.
   The HUD is a list of C++ element objects drawn through virtual calls, and
   all text is queued and drawn in one batch, so each element and each string
   is anchored as a whole. The unit icons, counters, crosshair and message box
-  stay centred.
+  stay centred. Anchored drawing is clipped to the (widened) 3D view area,
+  so HUD pieces the game parks in the TV overscan border stay hidden.
 - **Text bleed.** Scaled, filtered rectangles (the in-game font) blended in
   the next row of their packed texture when upscaled, leaving dots under each
   letter; `lib-patches/rt64/0005` ends the sampled range at the last row the

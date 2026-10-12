@@ -29,7 +29,9 @@
 //
 // Anchored pieces also move a little further out: the original layout keeps
 // clear of the TV's overscan, which a PC display doesn't have.
+#include <algorithm>
 #include <atomic>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <cstdio>
@@ -52,11 +54,14 @@ namespace {
     // RT64 adds the framebuffer width to right-anchored coordinates
     // (RDP::movedFromOrigin), so they're given relative to the right edge.
     constexpr int kRightShift = -kFbWidth * 4;   // 10.2 fixed point
-    constexpr int kEdgeMargin = 24 * 4;          // moved this much further out
-    // Anchored scissors stop a pixel short of the left edge: RT64 corrects
-    // left-anchored coordinates for misalignment by subtracting a pixel, and a
-    // scissor at -1 is invalid (Vulkan drops the draw).
-    constexpr int kScissorLeftMin = 1 * 4;
+    constexpr int kEdgeMargin = 12 * 4;          // moved this much further out
+    // The game clips its 3D view (and everything else it means to show) 16
+    // pixels in from the sides and 8 from the top and bottom, inside the TV's
+    // overscan. HUD pieces it parks off-screen sit in that border, so anchored
+    // drawing is clipped to the same view area -- widened like the 3D view.
+    constexpr int kViewBorderX = 16 * 4;
+    constexpr int kViewTop = 8 * 4;
+    constexpr int kViewBottom = (kFbHeight - 8) * 4;
 
     constexpr uint32_t kGfxStatePtr = 0x800A4768;
     constexpr int kMainListHead = 0x78;      // F3DEX2
@@ -102,6 +107,11 @@ namespace {
         if (from == to) {
             return;
         }
+        // The view border and window width in anchored coordinates, which
+        // count from the window edge in the game's (unwidened) pixels.
+        const float scale = std::max(widescreen_scale.load(std::memory_order_relaxed), 1.0f);
+        const int border = (int)std::lround(kViewBorderX * scale);
+        const int window_width = (int)std::lround(kFbWidth * 4 * scale);
         dl.cmd(0xE0525464, 0x10000064); // gEXEnable (G_SPNOOP + RT64 magic, opcode 0x64)
         if (to != Side::None) {
             const uint16_t origin = (to == Side::Left) ? kOriginLeft : kOriginRight;
@@ -111,14 +121,21 @@ namespace {
             }
             // RT64 clips to the current scissor, which the game set for the
             // centred 4:3 area (or for the other side): open it to the whole
-            // window. The game's own scissors from here on follow the anchor.
+            // widened view. The game's own scissors from here on follow the
+            // anchor, kept inside the view by the bounds.
             dl.cmd(0x64000005, (kOriginLeft << 2) | (kOriginRight << 14)); // gEXSetScissor
-            dl.cmd(pack16(kScissorLeftMin, 0), pack16(0, kFbHeight * 4));
+            dl.cmd(pack16(border, kViewTop), pack16(-border, kViewBottom));
             dl.cmd(0x64000006, origin | (origin << 12));                   // gEXSetRectAlign
             dl.cmd(pack16(shift, 0), pack16(shift, 0));
             dl.cmd(0x64000008, origin | (origin << 12));                   // gEXSetScissorAlign
             dl.cmd(pack16(shift, 0), pack16(shift, 0));
-            dl.cmd(pack16(kScissorLeftMin, 0), pack16(kFbWidth * 4, kFbHeight * 4));
+            if (to == Side::Left) {
+                dl.cmd(pack16(border, kViewTop), pack16(window_width - border, kViewBottom));
+            }
+            else {
+                // Right-anchored coordinates end at the framebuffer width.
+                dl.cmd(pack16(0, kViewTop), pack16(kFbWidth * 4 - border, kViewBottom));
+            }
             dl.cmd(0x64000007, origin);                                    // gEXSetViewportAlign
             dl.cmd(pack16(shift, 0), 0);
         }
