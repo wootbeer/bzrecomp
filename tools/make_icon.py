@@ -30,15 +30,15 @@ def render(size_px):
 
     lines = Image.new("RGB", (S, S), (0, 0, 0))
     d = ImageDraw.Draw(lines)
-    width = int(S * 0.03)
+    width = int(S * 0.02)
     for a, b in edges:
         d.line([a, b], fill=GREEN, width=width, joint="curve")
     for p in pts + [top]:
         r = width / 2
         d.ellipse([p[0] - r, p[1] - r, p[0] + r, p[1] + r], fill=GREEN)
 
-    glow = lines.filter(ImageFilter.GaussianBlur(S * 0.012))
-    glow = Image.eval(glow, lambda v: int(v * 0.45))
+    glow = lines.filter(ImageFilter.GaussianBlur(S * 0.018))
+    glow = Image.eval(glow, lambda v: min(255, int(v * 0.9)))
     img = ImageChops.add(glow, lines)
 
     # Black rounded square.
