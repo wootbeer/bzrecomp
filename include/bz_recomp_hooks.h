@@ -29,6 +29,14 @@ void bz_terrain_begin_reg(uint8_t* rdram, uint64_t* head_reg, float x, float y, 
 void bz_terrain_end(uint8_t* rdram, int32_t gfx_state);
 void bz_terrain_end_reg(uint8_t* rdram, uint64_t* head_reg);
 
+// src/game/widescreen_sprites.cpp: let effect sprites reach the widened
+// view (ovl1 func_8016765C = drawer 0, func_80166BD0 = drawer 1).
+void bz_sprites_begin(uint8_t* rdram, int drawer, uint64_t* head, uint64_t* tail);
+void bz_sprites_end(uint8_t* rdram, int drawer, uint64_t* head);
+void bz_sprites_cull_width(float* half_width);
+void bz_sprites_rect(int drawer, int32_t cx, int32_t half_w, int32_t cy, int32_t half_h);
+void bz_sprites_written(uint8_t* rdram, int drawer, int32_t end);
+
 // src/game/widescreen_hud.cpp: anchor HUD pieces to the screen edges in
 // Expand (see that file for where each hook sits).
 void bz_hud_radar_begin(uint8_t* rdram);

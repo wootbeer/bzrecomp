@@ -119,6 +119,57 @@ func = "ovl1_func_8012F2C0"
 before_vram = 0x8012f80c
 text = "    bz_terrain_end(rdram, (int32_t)ctx->r20);"
 
+# Widescreen effect sprites (src/game/widescreen_sprites.cpp).
+[[patches.hook]]  # write pointers $s1 (next command) and $s0
+func = "ovl1_func_8016765C"
+before_vram = 0x801676d8
+text = "    bz_sprites_begin(rdram, 0, &ctx->r17, &ctx->r16);"
+
+[[patches.hook]]  # c.le.s $f2, $f0: |x| - size against the half-width
+func = "ovl1_func_8016765C"
+before_vram = 0x80167758
+text = "    bz_sprites_cull_width(&ctx->f2.fl);"
+
+[[patches.hook]]  # centre $t0/$t2, half-size $a0/$a2
+func = "ovl1_func_8016765C"
+before_vram = 0x801677e4
+text = "    bz_sprites_rect(0, (int32_t)ctx->r8, (int32_t)ctx->r4, (int32_t)ctx->r10, (int32_t)ctx->r6);"
+
+[[patches.hook]]  # the sprite's G_RDPHALF_2 is written, ending at $s0
+func = "ovl1_func_8016765C"
+before_vram = 0x80167a3c
+text = "    bz_sprites_written(rdram, 0, (int32_t)ctx->r16);"
+
+[[patches.hook]]  # after the last sprite
+func = "ovl1_func_8016765C"
+before_vram = 0x80167a44
+text = "    bz_sprites_end(rdram, 0, &ctx->r17);"
+
+[[patches.hook]]  # write pointers $s1 (next command) and $s0
+func = "ovl1_func_80166BD0"
+before_vram = 0x80166c5c
+text = "    bz_sprites_begin(rdram, 1, &ctx->r17, &ctx->r16);"
+
+[[patches.hook]]  # c.le.s $f2, $f0: |x| - size against the half-width
+func = "ovl1_func_80166BD0"
+before_vram = 0x80166d98
+text = "    bz_sprites_cull_width(&ctx->f2.fl);"
+
+[[patches.hook]]  # centre $t2/$t3, half-size $a2/$a3
+func = "ovl1_func_80166BD0"
+before_vram = 0x80166e24
+text = "    bz_sprites_rect(1, (int32_t)ctx->r10, (int32_t)ctx->r6, (int32_t)ctx->r11, (int32_t)ctx->r7);"
+
+[[patches.hook]]  # the sprite's G_RDPHALF_2 is written, ending at $s0
+func = "ovl1_func_80166BD0"
+before_vram = 0x801670b0
+text = "    bz_sprites_written(rdram, 1, (int32_t)ctx->r16);"
+
+[[patches.hook]]  # after the last sprite
+func = "ovl1_func_80166BD0"
+before_vram = 0x801670bc
+text = "    bz_sprites_end(rdram, 1, &ctx->r17);"
+
 # Widescreen HUD anchoring (src/game/widescreen_hud.cpp).
 [[patches.hook]]  # jal func_80158A10 (radar backdrop)
 func = "ovl1_func_80122FB0"

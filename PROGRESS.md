@@ -69,6 +69,12 @@ leave the game's own behaviour, look and balance alone.
   everything else (invisible at N64 resolution, a visible shake upscaled).
   Hooks in the three ground builders load a modelview that undoes the error
   (`src/game/terrain_precision.cpp`).
+- **Effect sprites in widescreen.** Smoke, puffs and explosions are billboard
+  rectangles the game projects itself and culls at the 4:3 edge, clamping
+  any that cross the left or top edge. Hooks in the two sprite drawers widen
+  the cull and rewrite each sprite as an extended texture rectangle with its
+  unclamped coordinates, drawn with the scissor opened to the widened view
+  (`src/game/widescreen_sprites.cpp`).
 - **Text bleed.** Scaled, filtered rectangles (the in-game font) blended in
   the next row of their packed texture when upscaled, leaving dots under each
   letter; `lib-patches/rt64/0005` ends the sampled range at the last row the
