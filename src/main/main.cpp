@@ -49,6 +49,7 @@
 #include "librecomp/helpers.hpp"
 
 #include "bz_config.h"
+#include "bz_widescreen.h"
 
 #if defined(BZ_HAS_APP_ICON)
 #include "icon_bytes.h"
@@ -188,6 +189,18 @@ static void update_gfx(void*) {
     // correctly wired as the ultramodern input_callbacks_t::poll_input
     // callback and doesn't need to run again from here too.
     recompinput::handle_events();
+
+    // Mirrors RT64's Expand target (rt64_workload_queue.cpp): the window's
+    // aspect ratio, never narrower than the game's 4:3.
+    float widescreen_scale = 1.0f;
+    if (ultramodern::renderer::get_graphics_config().ar_option == ultramodern::renderer::AspectRatio::Expand) {
+        int width = 0, height = 0;
+        SDL_GetWindowSize(window, &width, &height);
+        if (width > 0 && height > 0) {
+            widescreen_scale = std::max(1.0f, (float(width) / float(height)) / (4.0f / 3.0f));
+        }
+    }
+    bz::set_widescreen_scale(widescreen_scale);
 }
 
 // --- Audio ----------------------------------------------------------------

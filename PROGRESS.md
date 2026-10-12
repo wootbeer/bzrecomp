@@ -51,6 +51,13 @@ leave the game's own behaviour, look and balance alone.
   width. RT64 only widened draws that span the full width, so the 3D view stayed
   4:3 between widened layers. `lib-patches/rt64/0006` lets draws that stop
   within a small margin of the edges count as full-width.
+- **Widescreen HUD.** In Expand, the radar and unit menu are anchored to the
+  left edge and the weapon panel to the right (RT64 extended GBI commands
+  written into the game's display lists from hooks: `src/game/widescreen_hud.cpp`).
+  The HUD is a list of C++ element objects drawn through virtual calls, and
+  all text is queued and drawn in one batch, so each element and each string
+  is anchored as a whole. The unit icons, counters, crosshair and message box
+  stay centred.
 - **Text bleed.** Scaled, filtered rectangles (the in-game font) blended in
   the next row of their packed texture when upscaled, leaving dots under each
   letter; `lib-patches/rt64/0005` ends the sampled range at the last row the
@@ -69,15 +76,18 @@ leave the game's own behaviour, look and balance alone.
   not yet confirmed against real hardware.
 - Once, with a Controller Pak save present, a decompress got a bad destination
   (0xA0000000) and crashed. Not reproduced since the module unload-order fix.
-- Windows not built or tested yet. No widescreen/HUD anchoring, no frame-time
-  work for higher framerates yet (BattleTanx's later rounds).
+- Windows builds run (tested by hand); no frame-time work for higher
+  framerates yet (BattleTanx's later rounds).
+- Widescreen HUD anchoring covers the gameplay HUD seen so far (training
+  mission, first campaign mission); other vehicles' or modes' HUD elements may
+  still sit in the centred 4:3 area. The message box stays centred.
 - Only the first campaign mission has been played.
 
 ## Next
 
 - Windows build and testing on real GPUs.
 - Play through more missions; multiplayer.
-- Frame pacing at higher framerates, widescreen, the edge strip.
+- Frame pacing at higher framerates.
 
 ## Where things are
 

@@ -22,6 +22,16 @@ void bz_yield_via_priority_drop(uint8_t* rdram);
 // module's recompiled functions.
 void bz_on_rom_read(uint8_t* rdram, int32_t dst, uint32_t pi_addr, uint32_t size);
 
+// src/game/widescreen_hud.cpp: anchor HUD pieces to the screen edges in
+// Expand (see that file for where each hook sits).
+void bz_hud_radar_begin(uint8_t* rdram);
+void bz_hud_piece_end(uint8_t* rdram);
+void bz_hud_element_begin(uint8_t* rdram, int32_t element);
+void bz_hud_text_begin(uint8_t* rdram);
+void bz_hud_text_end(uint8_t* rdram);
+void bz_hud_text_line(uint8_t* rdram, int32_t entry, uint64_t* head_reg);
+void bz_hud_text_done(uint8_t* rdram, uint64_t* head_reg);
+
 #ifdef __cplusplus
 }
 #endif
