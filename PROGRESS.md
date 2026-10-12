@@ -63,6 +63,12 @@ leave the game's own behaviour, look and balance alone.
   sides and 8 from the top and bottom, which an N64's TV hid in its overscan
   and a PC display shows as a black frame. RT64 crops it at presentation
   (`lib-patches/rt64/0007`); the game still renders the same.
+- **Ground jitter.** The ground grid is rebuilt every frame relative to the
+  camera, with the camera position truncated to whole vertex units once for
+  the whole grid, so the ground shifted by up to a unit per frame against
+  everything else (invisible at N64 resolution, a visible shake upscaled).
+  Hooks in the three ground builders load a modelview that undoes the error
+  (`src/game/terrain_precision.cpp`).
 - **Text bleed.** Scaled, filtered rectangles (the in-game font) blended in
   the next row of their packed texture when upscaled, leaving dots under each
   letter; `lib-patches/rt64/0005` ends the sampled range at the last row the

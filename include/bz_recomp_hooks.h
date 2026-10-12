@@ -22,6 +22,13 @@ void bz_yield_via_priority_drop(uint8_t* rdram);
 // module's recompiled functions.
 void bz_on_rom_read(uint8_t* rdram, int32_t dst, uint32_t pi_addr, uint32_t size);
 
+// src/game/terrain_precision.cpp: undo the ground grid's per-frame truncation
+// of the camera position (ovl1 func_8012F864, func_8012EAA8, func_8012F2C0).
+void bz_terrain_begin(uint8_t* rdram, int32_t gfx_state, float x, float y, float z);
+void bz_terrain_begin_reg(uint8_t* rdram, uint64_t* head_reg, float x, float y, float z);
+void bz_terrain_end(uint8_t* rdram, int32_t gfx_state);
+void bz_terrain_end_reg(uint8_t* rdram, uint64_t* head_reg);
+
 // src/game/widescreen_hud.cpp: anchor HUD pieces to the screen edges in
 // Expand (see that file for where each hook sits).
 void bz_hud_radar_begin(uint8_t* rdram);

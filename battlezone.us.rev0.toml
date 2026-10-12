@@ -87,6 +87,38 @@ text = "    bz_on_rom_read(rdram, (int32_t)ctx->r4, (uint32_t)ctx->r5, (uint32_t
 # Those hooks, and jr_targets for jump tables N64Recomp can't decode, are
 # generated below by tools/update_config.py.
 
+# Ground jitter (src/game/terrain_precision.cpp): the grid's exact start, just
+# after it's computed (truncated); and the end of the ground block.
+[[patches.hook]]  # x: $f8, y: $f9, z: $f7; main-list pointer in $t4
+func = "ovl1_func_8012F864"
+before_vram = 0x8012faac
+text = "    bz_terrain_begin_reg(rdram, &ctx->r12, ctx->f8.fl, ctx->f9.fl, ctx->f7.fl);"
+
+[[patches.hook]]  # lw $t9, 0x3F28($sp): before $t4 goes back to the graphics state
+func = "ovl1_func_8012F864"
+before_vram = 0x801306b4
+text = "    bz_terrain_end_reg(rdram, &ctx->r12);"
+
+[[patches.hook]]  # x: $f8, y: $f9, z: $f7, graphics state $s2
+func = "ovl1_func_8012EAA8"
+before_vram = 0x8012ecf8
+text = "    bz_terrain_begin(rdram, (int32_t)ctx->r18, ctx->f8.fl, ctx->f9.fl, ctx->f7.fl);"
+
+[[patches.hook]]  # lw $a2, 0x78($s2): before the block's G_ENDDL
+func = "ovl1_func_8012EAA8"
+before_vram = 0x8012f264
+text = "    bz_terrain_end(rdram, (int32_t)ctx->r18);"
+
+[[patches.hook]]  # x: $f7, y: $f8, z: $f3, graphics state $s4
+func = "ovl1_func_8012F2C0"
+before_vram = 0x8012f4ec
+text = "    bz_terrain_begin(rdram, (int32_t)ctx->r20, ctx->f7.fl, ctx->f8.fl, ctx->f3.fl);"
+
+[[patches.hook]]  # lw $a2, 0x78($s4): before the block's G_ENDDL
+func = "ovl1_func_8012F2C0"
+before_vram = 0x8012f80c
+text = "    bz_terrain_end(rdram, (int32_t)ctx->r20);"
+
 # Widescreen HUD anchoring (src/game/widescreen_hud.cpp).
 [[patches.hook]]  # jal func_80158A10 (radar backdrop)
 func = "ovl1_func_80122FB0"
