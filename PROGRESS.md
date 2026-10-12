@@ -68,7 +68,10 @@ leave the game's own behaviour, look and balance alone.
   the whole grid, so the ground shifted by up to a unit per frame against
   everything else (invisible at N64 resolution, a visible shake upscaled).
   Hooks in the three ground builders load a modelview that undoes the error
-  (`src/game/terrain_precision.cpp`).
+  (`src/game/terrain_precision.cpp`). That modelview is tagged for RT64's
+  frame interpolation to skip: only this frame's correction fits this frame's
+  vertices, and blending it with last frame's (which wraps by a whole unit)
+  brought the shake back once objects stopped being snapped (below).
 - **Screen shake at Display refresh rate.** The game keeps the camera's
   rotation in the projection matrix (which RT64 interpolates) and its position
   in every object's matrix, so all object matrices move together whenever the
