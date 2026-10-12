@@ -411,6 +411,24 @@ std::vector<recomp::GameEntry> supported_games = {
     std::abort();
 }
 
+// Gamepad defaults: the sticks swapped from RecompFrontend's, which play
+// better here -- the left stick on the C buttons and the right stick on the
+// N64 stick. Only fresh profiles use these; saved controls are kept. Must run
+// before anything reads the defaults (profiles load with the config).
+static void set_default_controller_mapping() {
+    using recompinput::GameInput;
+    using recompinput::InputField;
+    auto set = recompinput::set_default_mapping_for_controller;
+    set(GameInput::C_LEFT,     { InputField::controller_analog(SDL_CONTROLLER_AXIS_LEFTX, false), InputField::controller_digital(recompinput::SDL_CONTROLLER_BUTTON_NORTH) });
+    set(GameInput::C_RIGHT,    { InputField::controller_analog(SDL_CONTROLLER_AXIS_LEFTX, true),  InputField::controller_digital(recompinput::SDL_CONTROLLER_BUTTON_EAST) });
+    set(GameInput::C_UP,       { InputField::controller_analog(SDL_CONTROLLER_AXIS_LEFTY, false), InputField::controller_digital(SDL_CONTROLLER_BUTTON_LEFTSTICK) });
+    set(GameInput::C_DOWN,     { InputField::controller_analog(SDL_CONTROLLER_AXIS_LEFTY, true),  InputField::controller_digital(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) });
+    set(GameInput::X_AXIS_NEG, { InputField::controller_analog(SDL_CONTROLLER_AXIS_RIGHTX, false) });
+    set(GameInput::X_AXIS_POS, { InputField::controller_analog(SDL_CONTROLLER_AXIS_RIGHTX, true) });
+    set(GameInput::Y_AXIS_POS, { InputField::controller_analog(SDL_CONTROLLER_AXIS_RIGHTY, false) });
+    set(GameInput::Y_AXIS_NEG, { InputField::controller_analog(SDL_CONTROLLER_AXIS_RIGHTY, true) });
+}
+
 int main(int argc, char** argv) {
     std::set_terminate(report_unhandled_exception_and_abort);
 
@@ -445,6 +463,8 @@ int main(int argc, char** argv) {
     for (const auto& game : supported_games) {
         recomp::register_game(game);
     }
+
+    set_default_controller_mapping();
 
     recompinput::players::set_single_player_mode(true);
 
