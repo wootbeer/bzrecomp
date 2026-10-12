@@ -30,7 +30,7 @@ yet tested. See [PROGRESS.md](PROGRESS.md).
 
 On a gamepad, the default controls put the N64 stick on the right stick and
 the C buttons on the left stick, which suits the tank controls better. Saved
-controls are kept; use Reset to Defaults in the Controls tab to pick these up.
+controls are kept; use "Reset to defaults" on the Controls tab to pick these up.
 
 Like on the N64, a controller holds one pak: the game asks for a Rumble Pak when
 a mission starts while the Controller Pak (saves) is selected. Press B to
