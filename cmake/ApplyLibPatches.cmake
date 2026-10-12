@@ -8,9 +8,14 @@ if (NOT GIT_EXECUTABLE)
 endif()
 
 function(bz_apply_lib_patches submodule)
-    file(GLOB patches CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/lib-patches/${submodule}/*.patch")
+    if (CMAKE_SCRIPT_MODE_FILE)
+        # cmake -P (tools/setup-windows.ps1): no build to reconfigure.
+        file(GLOB patches "${CMAKE_SOURCE_DIR}/lib-patches/${submodule}/*.patch")
+    else()
+        file(GLOB patches CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/lib-patches/${submodule}/*.patch")
+        set_property(DIRECTORY "${CMAKE_SOURCE_DIR}" APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${patches})
+    endif()
     list(SORT patches)
-    set_property(DIRECTORY "${CMAKE_SOURCE_DIR}" APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${patches})
     foreach(patch IN LISTS patches)
         execute_process(
             COMMAND "${GIT_EXECUTABLE}" apply --ignore-whitespace --reverse --check "${patch}"
