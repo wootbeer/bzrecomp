@@ -1,0 +1,29 @@
+diff --git a/src/hle/rt64_rigid_body.cpp b/src/hle/rt64_rigid_body.cpp
+index fd8b3eb..1483c2a 100644
+--- a/src/hle/rt64_rigid_body.cpp
++++ b/src/hle/rt64_rigid_body.cpp
+@@ -18,18 +18,19 @@ namespace RT64 {
+ 
+     void RigidBody::updateLinear(const hlslpp::float4x4 &prevTransform, const hlslpp::float4x4 &curTransform, uint8_t componentInterpolation) {
+         if (componentInterpolation == G_EX_COMPONENT_AUTO) {
+-            const float Epsilon = 1e-6f;
+             const float VelocityTolerance = 5.0f; // TODO: Make configurable.
+             const float MagnitudeThreshold = 10.0f; // TODO: Make configurable.
+             hlslpp::float3 prevPosition = prevTransform[3].xyz;
+             hlslpp::float3 curPosition = curTransform[3].xyz;
+             hlslpp::float3 curLinearVelocity = curPosition - prevPosition;
+-            hlslpp::float3 curAcceleration = (curLinearVelocity - linearVelocity);
+             float prevVelMag = hlslpp::length(linearVelocity);
+             float curVelMag = hlslpp::length(curLinearVelocity);
+-            float dotCurVel = std::max(hlslpp::dot(linearVelocity / std::max(prevVelMag, Epsilon), curLinearVelocity / std::max(curVelMag, Epsilon))[0], Epsilon);
+-            curVelMag /= dotCurVel;
+-            lerpTranslation = (curVelMag < VelocityTolerance) || (curVelMag / std::max(prevVelMag, Epsilon)) < MagnitudeThreshold;
++
++            // Only a jump far past the last frame's speed is treated as a teleport. The speed used to be
++            // divided by how well its direction matched the last frame's, so any object whose motion turned
++            // or reversed (camera-relative objects whenever the camera jolts, or anything nearly still)
++            // read as moving many times faster and stopped interpolating for that frame.
++            lerpTranslation = (curVelMag < MagnitudeThreshold * std::max(prevVelMag, VelocityTolerance));
+             linearVelocity = curLinearVelocity;
+         }
+         else {

@@ -69,6 +69,16 @@ leave the game's own behaviour, look and balance alone.
   everything else (invisible at N64 resolution, a visible shake upscaled).
   Hooks in the three ground builders load a modelview that undoes the error
   (`src/game/terrain_precision.cpp`).
+- **Screen shake at Display refresh rate.** The game keeps the camera's
+  rotation in the projection matrix (which RT64 interpolates) and its position
+  in every object's matrix, so all object matrices move together whenever the
+  camera does. RT64's automatic position interpolation divided an object's
+  speed by how well its direction matched the last frame's, so whenever the
+  camera's motion turned or reversed (driving, firing), most objects read as
+  jumping and were snapped instead of interpolated for that frame: the scene
+  shook against the interpolated camera. `lib-patches/rt64/0008` snaps only
+  on a real jump (over 10x the last frame's speed, and over 50 units). On a
+  drive-and-fire run, snapped objects went from 415 to 12, all at scene cuts.
 - **Effect sprites in widescreen.** Smoke, puffs and explosions are billboard
   rectangles the game projects itself and culls at the 4:3 edge, clamping
   any that cross the left or top edge. Hooks in the two sprite drawers widen
@@ -93,8 +103,10 @@ leave the game's own behaviour, look and balance alone.
   not yet confirmed against real hardware.
 - Once, with a Controller Pak save present, a decompress got a bad destination
   (0xA0000000) and crashed. Not reproduced since the module unload-order fix.
-- Windows builds run (tested by hand); no frame-time work for higher
-  framerates yet (BattleTanx's later rounds).
+- Windows builds run (tested by hand). At higher framerates the ground still
+  moves at the game's own rate: its vertices are rebuilt around the camera's
+  position every frame, so only its sub-unit correction matrix is
+  interpolated, not its movement.
 - Widescreen HUD anchoring covers the gameplay HUD seen so far (training
   mission, first campaign mission); other vehicles' or modes' HUD elements may
   still sit in the centred 4:3 area. The message box stays centred.
