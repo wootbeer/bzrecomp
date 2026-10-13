@@ -226,3 +226,62 @@ extern "C" void bz_shadow_quad_bottom(uint8_t* rdram, uint64_t* head) {
     bz::write_matrix_group(rdram, kseg0(h + bz::kEnableBytes), id, kObjectGroupParams);
     *head = (uint64_t)(int64_t)(int32_t)h;
 }
+
+// Effects (ovl1 func_80164B80: flashes and glows, effect object in $s5): one
+// billboard Mtx at the position of the object the effect belongs to (the
+// effect's + 0x8, position at + 0x3C), written to the main list through $s1.
+extern "C" void bz_effect_begin(uint8_t* rdram, int32_t effect, uint64_t* head) {
+    update_frame(rdram);
+    const uint32_t owner = (uint32_t)MEM_W(0x8, kseg0((uint32_t)effect));
+    const uint32_t id = id_for_item(rdram, (uint32_t)effect, owner + 0x3C);
+    uint32_t h = (uint32_t)*head;
+    if (!main_enabled) {
+        bz::write_gbi_enable(rdram, kseg0(h));
+        h += bz::kEnableBytes;
+        main_enabled = true;
+    }
+    bz::write_matrix_group(rdram, kseg0(h), id, kObjectGroupParams);
+    *head = (uint64_t)(int64_t)(int32_t)(h + bz::kGroupBytes);
+}
+
+extern "C" void bz_effect_end(uint8_t* rdram, uint64_t* head) {
+    bz_obj_model_end(rdram, head);
+}
+
+// Beams (the plasma rifle's bolt among them): ovl1 func_8019F6D4 walks a list
+// of beam objects, and func_801A3F60 draws each as 8 vertices from the
+// shooter (beam + 0x10, position + 0x3C) to the bolt's head (beam + 0x90),
+// written straight into the frame's vertex pool relative to the camera and
+// drawn under the camera's own matrix (segment 0x0A) from the main list
+// ($a2). With no matrix of their own RT64 can't interpolate them, so a bolt
+// stayed at the newest game frame while the soldier firing it was drawn
+// between frames, and came out of his back. The beam gets its own group
+// with vertex interpolation, and the camera matrix is loaded again on each
+// side so its vertices form a transform of their own for RT64 to pair.
+namespace {
+    constexpr uint32_t kBeamGroupParams = kObjectGroupParams | (1u << 13);   // vertices interpolated too
+
+    uint32_t write_camera_matrix(uint8_t* rdram, uint32_t h) {
+        MEM_W(0x0, kseg0(h)) = (int32_t)0xDA380003u;   // gSPMatrix(modelview, load) of segment 0x0A
+        MEM_W(0x4, kseg0(h)) = (int32_t)0x0A000000u;
+        return h + 8;
+    }
+}
+
+extern "C" void bz_beam_begin(uint8_t* rdram, int32_t beam, uint64_t* head) {
+    update_frame(rdram);
+    const uint32_t id = id_for_item(rdram, (uint32_t)beam, (uint32_t)beam + 0x90);
+    uint32_t h = (uint32_t)*head;
+    bz::write_gbi_enable(rdram, kseg0(h));
+    h += bz::kEnableBytes;
+    bz::write_matrix_group(rdram, kseg0(h), id, kBeamGroupParams);
+    h = write_camera_matrix(rdram, h + bz::kGroupBytes);
+    *head = (uint64_t)(int64_t)(int32_t)h;
+}
+
+extern "C" void bz_beam_end(uint8_t* rdram, uint64_t* head) {
+    uint32_t h = (uint32_t)*head;
+    bz::write_matrix_group(rdram, kseg0(h), bz::kIdAuto, bz::kDefaultGroupParams);
+    h = write_camera_matrix(rdram, h + bz::kGroupBytes);
+    *head = (uint64_t)(int64_t)(int32_t)h;
+}

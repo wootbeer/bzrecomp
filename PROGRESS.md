@@ -94,7 +94,20 @@ leave the game's own behaviour, look and balance alone.
   always interpolated, and set RT64's default group back after. Items are
   reused, so an item whose world position breaks from its predicted path gets
   a new generation in its ID and is drawn where it is instead of being
-  blended from its old owner.
+  blended from its old owner. Flashes and glows (ovl1 `func_80164B80`) are
+  tagged the same way. Beams, the plasma rifle's bolt among them (ovl1
+  `func_801A3F60`, walked by `func_8019F6D4`), are 8 vertices written in
+  camera space under the camera's own matrix, so they stayed at the newest
+  game frame while the soldier firing was drawn between frames, and came out
+  of his back: each now gets its own group with vertex interpolation and its
+  own transform (the camera matrix reloaded around it).
+- **Ground at higher refresh rates.** The main ground builder's grid is now
+  built around a fixed anchor instead of the camera (`bz_terrain_begin_anchored`
+  in `src/game/terrain_precision.cpp`), so a grid point keeps the same vertex
+  from frame to frame and the camera's offset lives in the ground's matrix,
+  which RT64 interpolates like everything else. The anchor moves only when
+  the camera is 8192 vertex units (819 world units) away, with a new ID that
+  frame.
 - **Effect sprites in widescreen.** Smoke, puffs and explosions are billboard
   rectangles the game projects itself and culls at the 4:3 edge, clamping
   any that cross the left or top edge. Hooks in the two sprite drawers widen
@@ -119,10 +132,11 @@ leave the game's own behaviour, look and balance alone.
   not yet confirmed against real hardware.
 - Once, with a Controller Pak save present, a decompress got a bad destination
   (0xA0000000) and crashed. Not reproduced since the module unload-order fix.
-- Windows builds run (tested by hand). At higher framerates the ground still
-  moves at the game's own rate: its vertices are rebuilt around the camera's
-  position every frame, so only its sub-unit correction matrix is
-  interpolated, not its movement.
+- Windows builds run (tested by hand).
+- Reported: roughly every 30 seconds, at both refresh rates, something warps
+  across the whole screen for a moment. Not reproduced here: a three-minute
+  logged run showed no interpolated matrix jumping more than 150 units and no
+  mismatched camera projections.
 - Widescreen HUD anchoring covers the gameplay HUD seen so far (training
   mission, first campaign mission); other vehicles' or modes' HUD elements may
   still sit in the centred 4:3 area. The message box stays centred.

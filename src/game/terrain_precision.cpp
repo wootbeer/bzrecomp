@@ -22,6 +22,8 @@
 // this frame's correction fits them, and a blend with last frame's (which
 // wraps by a whole unit whenever the truncated position steps) shook the
 // ground again. Everything after it goes back to RT64's default group.
+// The main builder goes further (bz_terrain_begin_anchored below): its grid
+// is rebuilt around a fixed anchor, so its matrix can be interpolated.
 #include <cmath>
 #include <cstdint>
 
@@ -95,6 +97,69 @@ extern "C" void bz_terrain_begin(uint8_t* rdram, int32_t gfx_state, float x, flo
 
 extern "C" void bz_terrain_begin_reg(uint8_t* rdram, uint64_t* head_reg, float x, float y, float z) {
     *head_reg = (uint64_t)(int64_t)(int32_t)write_correction(rdram, (uint32_t)*head_reg, x, y, z);
+}
+
+// The main builder (func_8012F864), where its integer starts have just been
+// truncated: x at 0x3F34($sp), y (camera height) in $s1, z in $t5; the
+// grid's first cell (in 10-unit cells) is $s7, $t3; the exact starts are
+// x = (cell_x * 10 - camera_x) * 10 and likewise z, and y = camera_y * 10.
+// Vertices are x_int + 100 * column, height - y_int, z_int + 100 * row.
+//
+// The integers are replaced by the grid's position relative to a fixed
+// anchor instead of the camera, so a given grid point gets the same vertex
+// from frame to frame, and the camera's offset from the anchor goes into the
+// matrix, which RT64 can then interpolate like any other: the ground moves
+// smoothly at refresh rates above the game's instead of stepping once per
+// game frame. The anchor (in vertex units, 0.1 world unit) only moves once
+// the camera is kAnchorRange away, keeping vertices well inside 16 bits;
+// that frame gets a new ID so RT64 doesn't blend across the move.
+namespace {
+    constexpr double kAnchorRange = 8192.0;
+    constexpr double kAnchorSnap = 1024.0;
+    double anchor[3];
+    bool anchor_set = false;
+    uint32_t anchor_generation = 0;
+    constexpr uint32_t kGroundId = 0x7E000000u;
+
+    // Decomposed; position always interpolated (the only thing the matrix
+    // holds); vertices and texcoords skipped.
+    constexpr uint32_t kGroundGroupParams =
+        (1u << 2) | (1u << 3) | (1u << 5) | (1u << 7) | (1u << 9) | (1u << 11) | (2u << 15) | (0u << 17) | (2u << 24);
+}
+
+extern "C" void bz_terrain_begin_anchored(uint8_t* rdram, uint64_t* head_reg, float x, float y, float z,
+    int32_t cell_x, int32_t cell_z, int32_t sp, uint64_t* y_int, uint64_t* z_int) {
+    // Camera position in vertex units (exact start = cell * 100 - camera).
+    const double camera[3] = { cell_x * 100.0 - x, (double)y, cell_z * 100.0 - z };
+    bool moved = !anchor_set;
+    for (int i = 0; i < 3; i++) {
+        moved = moved || (std::fabs(camera[i] - anchor[i]) > kAnchorRange);
+    }
+    if (moved) {
+        for (int i = 0; i < 3; i++) {
+            anchor[i] = std::round(camera[i] / kAnchorSnap) * kAnchorSnap;
+        }
+        anchor_set = true;
+        anchor_generation++;
+    }
+    const int32_t x0 = cell_x * 100 - (int32_t)anchor[0];
+    const int32_t y0 = (int32_t)anchor[1];
+    const int32_t z0 = cell_z * 100 - (int32_t)anchor[2];
+    MEM_W(0x3F34, (gpr)sp) = x0;
+    *y_int = (uint64_t)(int64_t)y0;
+    *z_int = (uint64_t)(int64_t)z0;
+
+    uint32_t head = (uint32_t)*head_reg;
+    bz::write_gbi_enable(rdram, kseg0(head));
+    bz::write_matrix_group(rdram, kseg0(head + bz::kEnableBytes), kGroundId | (anchor_generation & 0xFFFFu), kGroundGroupParams);
+    head += bz::kEnableBytes + bz::kGroupBytes;
+    const gpr h = kseg0(head);
+    MEM_W(0x0, h) = (int32_t)0xDA380003u;      // gSPMatrix(modelview, load)
+    MEM_W(0x4, h) = (int32_t)(head + 16);
+    MEM_W(0x8, h) = (int32_t)0xDE010000u;      // gSPBranchList past the matrix data
+    MEM_W(0xC, h) = (int32_t)(head + 16 + 64);
+    write_translation_mtx(rdram, h + 16, (float)((double)x - x0), (float)((double)y0 - y), (float)((double)z - z0));
+    *head_reg = (uint64_t)(int64_t)(int32_t)(head + 16 + 64);
 }
 
 // Where the ground block ends.

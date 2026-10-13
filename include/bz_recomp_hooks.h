@@ -26,6 +26,8 @@ void bz_on_rom_read(uint8_t* rdram, int32_t dst, uint32_t pi_addr, uint32_t size
 // of the camera position (ovl1 func_8012F864, func_8012EAA8, func_8012F2C0).
 void bz_terrain_begin(uint8_t* rdram, int32_t gfx_state, float x, float y, float z);
 void bz_terrain_begin_reg(uint8_t* rdram, uint64_t* head_reg, float x, float y, float z);
+void bz_terrain_begin_anchored(uint8_t* rdram, uint64_t* head_reg, float x, float y, float z,
+    int32_t cell_x, int32_t cell_z, int32_t sp, uint64_t* y_int, uint64_t* z_int);
 void bz_terrain_end(uint8_t* rdram, int32_t gfx_state);
 void bz_terrain_end_reg(uint8_t* rdram, uint64_t* head_reg);
 
@@ -42,6 +44,12 @@ void bz_particle_end(uint8_t* rdram, uint64_t* head);
 // ...and on the ground shadow ovl1 func_80129CE0 draws under an object.
 void bz_shadow_quad_top(uint8_t* rdram, uint64_t* head);
 void bz_shadow_quad_object(int32_t object);
+// ...and on the effects ovl1 func_80164B80 draws.
+void bz_effect_begin(uint8_t* rdram, int32_t effect, uint64_t* head);
+void bz_effect_end(uint8_t* rdram, uint64_t* head);
+// ...and on the beams ovl1 func_801A3F60 draws.
+void bz_beam_begin(uint8_t* rdram, int32_t beam, uint64_t* head);
+void bz_beam_end(uint8_t* rdram, uint64_t* head);
 void bz_shadow_quad_bottom(uint8_t* rdram, uint64_t* head);
 
 // src/game/widescreen_sprites.cpp: let effect sprites reach the widened
