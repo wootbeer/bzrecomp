@@ -101,6 +101,14 @@ leave the game's own behaviour, look and balance alone.
   game frame while the soldier firing was drawn between frames, and came out
   of his back: each now gets its own group with vertex interpolation and its
   own transform (the camera matrix reloaded around it).
+- **One-frame widescreen glitch** (`lib-patches/rt64/0009`). Every half
+  minute or so, in Expand only, one frame lost its widescreen adjustment: the
+  HUD drew about 1.33x wider around its anchors and the 3D view changed
+  framing. The game sometimes sets a small scissor entirely off-screen (around
+  x = 1000 on a 640-wide frame, for a marker past the screen edge), and RT64
+  folded it into the frame's overall scissor, which is what decides whether
+  draws span the screen in Expand. Only the part of a scissor on the
+  framebuffer counts towards it now; drawing is unchanged.
 - **Ground at higher refresh rates.** The main ground builder's grid is now
   built around a fixed anchor instead of the camera (`bz_terrain_begin_anchored`
   in `src/game/terrain_precision.cpp`), so a grid point keeps the same vertex
@@ -133,10 +141,9 @@ leave the game's own behaviour, look and balance alone.
 - Once, with a Controller Pak save present, a decompress got a bad destination
   (0xA0000000) and crashed. Not reproduced since the module unload-order fix.
 - Windows builds run (tested by hand).
-- Reported: roughly every 30 seconds, at both refresh rates, something warps
-  across the whole screen for a moment. Not reproduced here: a three-minute
-  logged run showed no interpolated matrix jumping more than 150 units and no
-  mismatched camera projections.
+- The plasma rifle's bolt passes through the soldier's back when fired on
+  foot: the game spawns it at the soldier's own position and draws it from
+  there (as on the original; checked with interpolation off).
 - Widescreen HUD anchoring covers the gameplay HUD seen so far (training
   mission, first campaign mission); other vehicles' or modes' HUD elements may
   still sit in the centred 4:3 area. The message box stays centred.

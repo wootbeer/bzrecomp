@@ -1,0 +1,93 @@
+diff --git a/src/common/rt64_common.cpp b/src/common/rt64_common.cpp
+index 6bbc094..ab8187a 100644
+--- a/src/common/rt64_common.cpp
++++ b/src/common/rt64_common.cpp
+@@ -4,6 +4,8 @@
+ 
+ #include "rt64_common.h"
+ 
++#include <algorithm>
++
+ #include <cassert>
+ #include <cmath>
+ 
+@@ -48,6 +50,19 @@ namespace RT64 {
+         lry = std::max(lry, rect.lry);
+     }
+ 
++    void FixedRect::mergeWithinWidth(const FixedRect &rect, int32_t maxX) {
++        FixedRect clipped = rect;
++        clipped.ulx = std::clamp(clipped.ulx, 0, maxX);
++        clipped.lrx = std::clamp(clipped.lrx, 0, maxX);
++        if (clipped.lrx > clipped.ulx) {
++            merge(clipped);
++        }
++        else if (isNull()) {
++            // Nothing on the framebuffer: keep the rect as it was rather than leave the merge empty.
++            merge(rect);
++        }
++    }
++
+     FixedRect FixedRect::scaled(float x, float y) const {
+         assert(!isNull());
+         assert(x >= 0.0f);
+diff --git a/src/common/rt64_common.h b/src/common/rt64_common.h
+index f79adbf..4fecc75 100644
+--- a/src/common/rt64_common.h
++++ b/src/common/rt64_common.h
+@@ -82,6 +82,8 @@ namespace RT64 {
+         bool isEmpty() const;
+         bool isNull() const;
+         void merge(const FixedRect &rect);
++        // Merges the part of the rect inside [0, maxX] horizontally, if any.
++        void mergeWithinWidth(const FixedRect &rect, int32_t maxX);
+         FixedRect scaled(float x, float y) const;
+ 
+         // Intersections can result in invalid rects if they don't overlap. Check if they're not null after using this.
+diff --git a/src/hle/rt64_rdp.cpp b/src/hle/rt64_rdp.cpp
+index 732f357..9db0ab8 100644
+--- a/src/hle/rt64_rdp.cpp
++++ b/src/hle/rt64_rdp.cpp
+@@ -1136,7 +1136,11 @@ namespace RT64 {
+ 
+         const FixedRect &scissorRect = state->rdp->scissorRectStack[scissorStackSize - 1];
+         if (!scissorRect.isNull()) {
+-            fbPair.scissorRect.merge(scissorRect);
++            // Only the part of the scissor on the framebuffer counts towards the pair's scissor, which decides
++            // whether draws span the screen in Expand: games can set scissors entirely off-screen (Battlezone: Rise
++            // of the Black Dogs does, for a marker past the screen edge), harmless on hardware, and one of those
++            // made a frame's HUD and 3D lose their widescreen adjustment.
++            fbPair.scissorRect.mergeWithinWidth(scissorRect, int32_t(colorImage.width) * 4);
+ 
+             FixedRect drawRect;
+             for (uint32_t i = 0; i < triCount * 3; i++) {
+@@ -1212,7 +1216,11 @@ namespace RT64 {
+         }
+ 
+         if (!scissorRect.isNull()) {
+-            fbPair.scissorRect.merge(scissorRect);
++            // Only the part of the scissor on the framebuffer counts towards the pair's scissor, which decides
++            // whether draws span the screen in Expand: games can set scissors entirely off-screen (Battlezone: Rise
++            // of the Black Dogs does, for a marker past the screen edge), harmless on hardware, and one of those
++            // made a frame's HUD and 3D lose their widescreen adjustment.
++            fbPair.scissorRect.mergeWithinWidth(scissorRect, int32_t(colorImage.width) * 4);
+ 
+             const FixedRect intRect = scissorRect.intersection(drawRect);
+             if (!intRect.isNull()) {
+diff --git a/src/hle/rt64_rsp.cpp b/src/hle/rt64_rsp.cpp
+index 31a8d9b..a05bbd5 100644
+--- a/src/hle/rt64_rsp.cpp
++++ b/src/hle/rt64_rsp.cpp
+@@ -1141,7 +1141,11 @@ namespace RT64 {
+ 
+         const FixedRect &scissorRect = state->rdp->scissorRectStack[state->rdp->scissorStackSize - 1];
+         if (visibleTri && !scissorRect.isNull()) {
+-            fbPair.scissorRect.merge(scissorRect);
++            // Only the part of the scissor on the framebuffer counts towards the pair's scissor, which decides
++            // whether draws span the screen in Expand: games can set scissors entirely off-screen (Battlezone: Rise
++            // of the Black Dogs does, for a marker past the screen edge), harmless on hardware, and one of those
++            // made a frame's HUD and 3D lose their widescreen adjustment.
++            fbPair.scissorRect.mergeWithinWidth(scissorRect, int32_t(state->rdp->colorImage.width) * 4);
+ 
+             FixedRect drawRect;
+             for (int i = 0; i < 3; i++) {
