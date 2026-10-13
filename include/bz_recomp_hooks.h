@@ -29,6 +29,21 @@ void bz_terrain_begin_reg(uint8_t* rdram, uint64_t* head_reg, float x, float y, 
 void bz_terrain_end(uint8_t* rdram, int32_t gfx_state);
 void bz_terrain_end_reg(uint8_t* rdram, uint64_t* head_reg);
 
+// src/game/interpolation_ids.cpp: matrix IDs for RT64's frame interpolation
+// on each object func_8002DC40 draws (its model, and its shadow in the
+// backward-built list at graphics state + 0x94).
+void bz_obj_model_begin(uint8_t* rdram, int32_t item, uint64_t* head);
+void bz_obj_model_end(uint8_t* rdram, uint64_t* head);
+void bz_obj_shadow_top(uint8_t* rdram, uint64_t* head);
+void bz_obj_shadow_bottom(uint8_t* rdram, uint64_t* head);
+// ...and on each particle ovl1 func_80166810 draws.
+void bz_particle_begin(uint8_t* rdram, int32_t particle, uint64_t* cursor, uint64_t* head);
+void bz_particle_end(uint8_t* rdram, uint64_t* head);
+// ...and on the ground shadow ovl1 func_80129CE0 draws under an object.
+void bz_shadow_quad_top(uint8_t* rdram, uint64_t* head);
+void bz_shadow_quad_object(int32_t object);
+void bz_shadow_quad_bottom(uint8_t* rdram, uint64_t* head);
+
 // src/game/widescreen_sprites.cpp: let effect sprites reach the widened
 // view (ovl1 func_8016765C = drawer 0, func_80166BD0 = drawer 1).
 void bz_sprites_begin(uint8_t* rdram, int drawer, uint64_t* head, uint64_t* tail);

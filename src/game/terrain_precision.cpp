@@ -27,6 +27,7 @@
 
 #include "recomp.h"
 
+#include "bz_matrix_group.h"
 #include "bz_recomp_hooks.h"
 
 namespace {
@@ -56,31 +57,14 @@ namespace {
         }
     }
 
-    constexpr uint32_t kIdIgnore = 0x0;           // G_EX_ID_IGNORE
-    constexpr uint32_t kIdAuto = 0xFFFFFFFFu;     // G_EX_ID_AUTO
-    // RT64's default group: decomposed; position, rotation, scale, skew,
-    // perspective, tiles and look-at automatic; vertices and texcoords
-    // skipped; automatic ordering.
-    constexpr uint32_t kDefaultGroupParams =
-        (1u << 2) | (2u << 3) | (2u << 5) | (2u << 7) | (2u << 9) | (2u << 11) | (2u << 15) | (1u << 17) | (2u << 24);
-
-    // gEXMatrixGroup, no push: replaces the top of the modelview group stack.
-    void write_group(uint8_t* rdram, gpr h, uint32_t id, uint32_t params) {
-        MEM_W(0x0, h) = (int32_t)0x6400000Cu;
-        MEM_W(0x4, h) = (int32_t)id;
-        MEM_W(0x8, h) = (int32_t)params;
-        MEM_W(0xC, h) = 0;
-    }
-
     // Writes the corrected modelview at `head`; returns the new write position.
     // Vertices store x_int + n*step, z_int + n*step and height - y_int, where
     // the ints are the exact values truncated (trunc.w.s, as C's conversion),
     // so the error is undone by translating by (x - x_int, y_int - y, z - z_int).
     uint32_t write_correction(uint8_t* rdram, uint32_t head, float x, float y, float z) {
-        MEM_W(0x0, kseg0(head)) = (int32_t)0xE0525464u; // gEXEnable
-        MEM_W(0x4, kseg0(head)) = (int32_t)0x10000064u;
-        write_group(rdram, kseg0(head + 8), kIdIgnore, 0);
-        head += 8 + 16;
+        bz::write_gbi_enable(rdram, kseg0(head));
+        bz::write_matrix_group(rdram, kseg0(head + bz::kEnableBytes), bz::kIdIgnore, 0);
+        head += bz::kEnableBytes + bz::kGroupBytes;
         const gpr h = kseg0(head);
         MEM_W(0x0, h) = (int32_t)0xDA380003u;      // gSPMatrix(modelview, load)
         MEM_W(0x4, h) = (int32_t)(head + 16);
@@ -92,8 +76,8 @@ namespace {
 
     // The usual modelview again (the setup lists load it from segment 0x0A).
     uint32_t write_restore(uint8_t* rdram, uint32_t head) {
-        write_group(rdram, kseg0(head), kIdAuto, kDefaultGroupParams);
-        head += 16;
+        bz::write_matrix_group(rdram, kseg0(head), bz::kIdAuto, bz::kDefaultGroupParams);
+        head += bz::kGroupBytes;
         const gpr h = kseg0(head);
         MEM_W(0x0, h) = (int32_t)0xDA380003u;
         MEM_W(0x4, h) = (int32_t)0x0A000000u;

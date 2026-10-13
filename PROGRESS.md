@@ -82,6 +82,19 @@ leave the game's own behaviour, look and balance alone.
   shook against the interpolated camera. `lib-patches/rt64/0008` snaps only
   on a real jump (over 10x the last frame's speed, and over 50 units). On a
   drive-and-fire run, snapped objects went from 415 to 12, all at scene cuts.
+- **Interpolation IDs** (`src/game/interpolation_ids.cpp`). Snapping had
+  been hiding RT64's wrong guesses at which object was which (the matrices
+  come from a pool rebuilt each frame): with it gone, a new bullet flew out of
+  the player's back, shadows swelled and snapped back, and now and then an
+  object paired with one across the map swept over the screen. Every object
+  is drawn by `func_8002DC40` (per render item, from the depth-sorted buckets
+  of `func_8002FFFC`), its ground shadow by ovl1 `func_80129CE0` and smoke and
+  debris particles by ovl1 `func_80166810`; hooks there tag each with a
+  gEXMatrixGroup whose ID is the render item's (or particle's) address,
+  always interpolated, and set RT64's default group back after. Items are
+  reused, so an item whose world position breaks from its predicted path gets
+  a new generation in its ID and is drawn where it is instead of being
+  blended from its old owner.
 - **Effect sprites in widescreen.** Smoke, puffs and explosions are billboard
   rectangles the game projects itself and culls at the 4:3 edge, clamping
   any that cross the left or top edge. Hooks in the two sprite drawers widen
