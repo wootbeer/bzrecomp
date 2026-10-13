@@ -109,6 +109,11 @@ leave the game's own behaviour, look and balance alone.
   folded it into the frame's overall scissor, which is what decides whether
   draws span the screen in Expand. Only the part of a scissor on the
   framebuffer counts towards it now; drawing is unchanged.
+- **Screen filters** (Graphics tab, Screen Filter: None, CRT, Scanlines,
+  LCD), ported from the Turok: Rage Wars recomp (`lib-patches/rt64/0010`, its
+  0005): CRT from Timothy Lottes' CRT shader, LCD from LCD3x, both public
+  domain, in RT64's video pass and lined up with the N64's lines at any
+  resolution. Set each frame from the option (`src/main/main.cpp`).
 - **Ground at higher refresh rates.** The main ground builder's grid is now
   built around a fixed anchor instead of the camera (`bz_terrain_begin_anchored`
   in `src/game/terrain_precision.cpp`), so a grid point keeps the same vertex

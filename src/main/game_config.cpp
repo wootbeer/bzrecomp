@@ -1,5 +1,6 @@
-// Game-specific options on the General tab: which pak each controller holds,
-// and local multiplayer. See include/bz_config.h.
+// Game-specific options on the General tab (which pak each controller holds,
+// and local multiplayer) and the Graphics tab (Screen Filter). See
+// include/bz_config.h.
 #include "bz_config.h"
 
 #include "recompui/config.h"
@@ -17,10 +18,19 @@ namespace {
         {Accessory::None, "None", "None"},
     };
 
+    const std::string screen_filter_id = "screen_filter";
+    const std::vector<recomp::config::ConfigOptionEnumOption> screen_filter_options = {
+        {bz::config::ScreenFilter::None, "None", "None"},
+        {bz::config::ScreenFilter::CRT, "CRT", "CRT"},
+        {bz::config::ScreenFilter::Scanlines, "Scanlines", "Scanlines"},
+        {bz::config::ScreenFilter::LCD, "LCD", "LCD"},
+    };
+
     // Looked up by id on each read: the Config& create_general_tab() returns
     // lives in a container that moves when later tabs are created, so a
     // pointer kept from it dangles.
     bool options_added = false;
+    bool graphics_options_added = false;
 }
 
 void bz::config::add_general_options(recomp::config::Config& general) {
@@ -71,4 +81,27 @@ bool bz::config::get_local_multiplayer() {
         return false;
     }
     return std::get<bool>(recompui::config::get_general_config().get_option_value(local_multiplayer_id));
+}
+
+void bz::config::add_graphics_options(recomp::config::Config& graphics) {
+    graphics_options_added = true;
+
+    graphics.add_enum_option(
+        screen_filter_id,
+        "Screen Filter",
+        "A filter over the final picture, lined up with the N64's own lines at any resolution."
+        "<br/><br/>"
+        "<b>CRT</b>: a TV's scanlines, glow and shadow mask (Timothy Lottes' CRT shader).<br/>"
+        "<b>Scanlines</b>: dark gaps between the lines only.<br/>"
+        "<b>LCD</b>: a handheld LCD's red, green and blue stripes (LCD3x).",
+        screen_filter_options,
+        ScreenFilter::None
+    );
+}
+
+bz::config::ScreenFilter bz::config::get_screen_filter() {
+    if (!graphics_options_added) {
+        return ScreenFilter::None;
+    }
+    return static_cast<ScreenFilter>(std::get<uint32_t>(recompui::config::get_graphics_config().get_option_value(screen_filter_id)));
 }

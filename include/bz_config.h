@@ -5,7 +5,8 @@
 
 #include "librecomp/config.hpp"
 
-// Game-specific options, shown on the General tab (src/main/game_config.cpp).
+// Game-specific options, shown on the General and Graphics tabs
+// (src/main/game_config.cpp).
 namespace bz::config {
     // What's plugged into a controller's accessory slot. Like on the N64, one
     // controller holds one pak at a time.
@@ -18,6 +19,19 @@ namespace bz::config {
     // Adds this game's options to the General tab. Call between
     // recompui::config::create_general_tab() and recompui::config::finalize().
     void add_general_options(recomp::config::Config& general);
+
+    // The filter over the final picture (RT64::ScreenFilter, lib-patches/rt64/0010).
+    enum class ScreenFilter : uint32_t {
+        None,
+        CRT,
+        Scanlines,
+        LCD,
+    };
+
+    // Adds Screen Filter to the Graphics tab. Call between
+    // recompui::config::create_graphics_tab() and recompui::config::finalize().
+    void add_graphics_options(recomp::config::Config& graphics);
+    ScreenFilter get_screen_filter();
 
     Accessory get_accessory(int port);
     bool get_local_multiplayer();

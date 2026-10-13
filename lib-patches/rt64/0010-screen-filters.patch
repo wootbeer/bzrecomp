@@ -1,0 +1,232 @@
+diff --git a/src/render/rt64_vi_renderer.cpp b/src/render/rt64_vi_renderer.cpp
+index b4ff4e9..e89aaf4 100644
+--- a/src/render/rt64_vi_renderer.cpp
++++ b/src/render/rt64_vi_renderer.cpp
+@@ -3,11 +3,26 @@
+ //
+ 
+ #include "rt64_vi_renderer.h"
++#include "rt64_screen_filter.h"
++
++#include <atomic>
+ 
+ #include "shared/rt64_hlsl.h"
+ #include "shared/rt64_video_interface.h"
+ 
+ namespace RT64 {
++    // Screen filter
++
++    static std::atomic<uint32_t> screenFilter{ uint32_t(ScreenFilter::None) };
++
++    void setScreenFilter(ScreenFilter filter) {
++        screenFilter.store(uint32_t(filter), std::memory_order_relaxed);
++    }
++
++    ScreenFilter getScreenFilter() {
++        return ScreenFilter(screenFilter.load(std::memory_order_relaxed));
++    }
++
+     // VIRenderer
+ 
+     VIRenderer::VIRenderer() { }
+@@ -77,6 +92,18 @@ namespace RT64 {
+         pushConstants.videoResolution = computeHDSize(hlslpp::float2(p.vi->fbSize()), p.resolutionScale, p.downsamplingScale);
+         pushConstants.textureResolution = { float(p.textureWidth), float(p.textureHeight) };
+         pushConstants.gamma = p.vi->gamma();
++        pushConstants.screenFilter = uint32_t(getScreenFilter());
++
++        // Scanlines follow the TV's lines: a 480-line frame is two interlaced
++        // fields of 240, so it gets 240 lines like the rest.
++        const hlslpp::uint2 fbSize = p.vi->fbSize();
++        float sourceWidth = float(fbSize.x);
++        float sourceHeight = float(fbSize.y);
++        if (sourceHeight > 300.0f) {
++            sourceHeight /= 2.0f;
++        }
++
++        pushConstants.sourceResolution = { sourceWidth, sourceHeight };
+ 
+         p.commandList->setPipeline(shader->pipeline.get());
+         p.commandList->setGraphicsPipelineLayout(shader->pipelineLayout.get());
+diff --git a/src/shaders/VideoInterfacePS.hlsl b/src/shaders/VideoInterfacePS.hlsl
+index 3f33475..b5c69ff 100644
+--- a/src/shaders/VideoInterfacePS.hlsl
++++ b/src/shaders/VideoInterfacePS.hlsl
+@@ -32,7 +32,137 @@ float4 PixelAntialiasing(float2 uv) {
+     return SampleInput(uvTexspace / gConstants.textureResolution);
+ }
+ 
++
++// Screen filters (gConstants.screenFilter, RT64::ScreenFilter). They work in
++// N64 pixels (sourceResolution) so the lines match the original picture at any
++// resolution scale, while the picture itself is still read at full resolution.
++
++float3 SampleSource(float2 srcPos) {
++    return SampleInput((srcPos / gConstants.sourceResolution) * (gConstants.videoResolution / gConstants.textureResolution)).rgb;
++}
++
++float3 ToLinear(float3 c) { return pow(max(c, 0.0f), 2.2f); }
++float3 ToSrgb(float3 c) { return pow(max(c, 0.0f), 1.0f / 2.2f); }
++
++// How strongly a filter's lines may show: fades them out once a line is less
++// than about two screen pixels tall, where they would only alias.
++float LineVisibility(float2 srcPos) {
++    return saturate(2.0f - 2.0f * fwidth(srcPos.y) * 2.0f);
++}
++
++//
++// CRT: from Timothy Lottes' PUBLIC DOMAIN CRT shader (libretro crt-lottes,
++// hardScan -8, hardPix -3, mask 0.5/1.5, shadowMask 3, bloom 0.15), flat: the
++// tube curve (warp) is left out. Horizontally the picture is read at full
++// resolution instead of being rebuilt from N64 pixels.
++//
++static const float CrtHardScan = -8.0f;
++static const float CrtHardBloomScan = -2.0f;
++static const float CrtBloomAmount = 0.15f;
++static const float CrtMaskDark = 0.5f;
++static const float CrtMaskLight = 1.5f;
++
++float CrtGaus(float pos, float scale) { return exp2(scale * pos * pos); }
++
++float3 CrtLine(float2 srcPos, float offset) {
++    return ToLinear(SampleSource(float2(srcPos.x, floor(srcPos.y) + 0.5f + offset)));
++}
++
++float3 CrtLineWide(float2 srcPos, float offset) {
++    float y = floor(srcPos.y) + 0.5f + offset;
++    float3 c = 0.0f;
++    float wsum = 0.0f;
++    [unroll]
++    for (int i = -2; i <= 2; i++) {
++        float w = CrtGaus(float(i), -1.5f);
++        c += ToLinear(SampleSource(float2(srcPos.x + float(i), y))) * w;
++        wsum += w;
++    }
++    return c / wsum;
++}
++
++float3 CrtMask(float2 screenPos) {
++    // Lottes shadowMask 3: stretched VGA-style aperture.
++    float3 mask = CrtMaskDark;
++    float x = frac((screenPos.x + screenPos.y * 3.0f) / 6.0f);
++    if (x < 0.333f) mask.r = CrtMaskLight;
++    else if (x < 0.666f) mask.g = CrtMaskLight;
++    else mask.b = CrtMaskLight;
++    return mask;
++}
++
++float3 FilterCrt(float2 srcPos, float2 screenPos) {
++    float dy = srcPos.y - (floor(srcPos.y) + 0.5f);
++    float visibility = LineVisibility(srcPos);
++    float hardScan = lerp(-0.5f, CrtHardScan, visibility);
++
++    // Three lines, weighted by how far the beam is from each (Lottes Tri).
++    float wa = CrtGaus(dy + 1.0f, hardScan);
++    float wb = CrtGaus(dy, hardScan);
++    float wc = CrtGaus(dy - 1.0f, hardScan);
++    float3 color = CrtLine(srcPos, -1.0f) * wa + CrtLine(srcPos, 0.0f) * wb + CrtLine(srcPos, 1.0f) * wc;
++
++    // Glow from the five nearest lines (Lottes Bloom).
++    float3 bloom = 0.0f;
++    [unroll]
++    for (int i = -2; i <= 2; i++) {
++        bloom += CrtLineWide(srcPos, float(i)) * CrtGaus(dy - float(i), CrtHardBloomScan);
++    }
++
++    color += bloom * CrtBloomAmount;
++    color *= lerp(1.0f, CrtMask(screenPos), visibility);
++    return ToSrgb(color);
++}
++
++//
++// Scanlines: dark gaps between the N64's lines, nothing else.
++//
++float3 FilterScanlines(float2 srcPos) {
++    float3 color = ToLinear(SampleSource(srcPos));
++    float dy = srcPos.y - (floor(srcPos.y) + 0.5f);
++    float beam = 0.5f + 0.5f * cos(6.2831853f * dy);
++    float shade = lerp(1.0f, lerp(0.35f, 1.15f, beam), LineVisibility(srcPos));
++    return ToSrgb(color * shade);
++}
++
++//
++// LCD: from LCD3x by Gigaherz (PUBLIC DOMAIN, libretro lcd3x), a handheld LCD
++// grid of red, green and blue stripes with faint gaps between rows.
++//
++static const float LcdBrightenScanlines = 16.0f;
++static const float LcdBrightenLcd = 4.0f;
++
++float3 FilterLcd(float2 srcPos) {
++    const float3 offsets = 3.1415926f * float3(0.5f, 0.5f - 2.0f / 3.0f, 0.5f - 4.0f / 3.0f);
++    float2 angle = srcPos * 6.2831853f;
++    float yfactor = (LcdBrightenScanlines + sin(angle.y)) / (LcdBrightenScanlines + 1.0f);
++    float3 xfactors = (LcdBrightenLcd + sin(angle.x + offsets)) / (LcdBrightenLcd + 1.0f);
++    float3 grid = lerp(1.0f, yfactor * xfactors, LineVisibility(srcPos));
++    return SampleSource(srcPos) * grid;
++}
++
++float4 ApplyScreenFilter(float2 uv, float2 screenPos) {
++    // Keep the black outside the picture.
++    float2 srcPos = uv * gConstants.sourceResolution;
++    float3 color;
++    if (gConstants.screenFilter == 1) {
++        color = FilterCrt(srcPos, screenPos);
++    }
++    else if (gConstants.screenFilter == 2) {
++        color = FilterScanlines(srcPos);
++    }
++    else {
++        color = FilterLcd(srcPos);
++    }
++
++    return float4(color, 1.0f);
++}
++
+ float4 PSMain(in float4 pos : SV_Position, in float2 uv : TEXCOORD0) : SV_TARGET {
++    if (gConstants.screenFilter != 0) {
++        return ApplyScreenFilter(uv, pos.xy);
++    }
++
+ #ifdef PIXEL_ANTIALIASING
+     return PixelAntialiasing(uv);
+ #else
+diff --git a/src/shared/rt64_video_interface.h b/src/shared/rt64_video_interface.h
+index b51cf09..aa1aa92 100644
+--- a/src/shared/rt64_video_interface.h
++++ b/src/shared/rt64_video_interface.h
+@@ -13,6 +13,8 @@ namespace interop {
+         float2 videoResolution;
+         float2 textureResolution;
+         float gamma;
++        uint screenFilter; // RT64::ScreenFilter (render/rt64_screen_filter.h)
++        float2 sourceResolution; // the frame buffer size in N64 pixels
+     };
+ #ifdef HLSL_CPU
+ };
+diff --git a/src/render/rt64_screen_filter.h b/src/render/rt64_screen_filter.h
+new file mode 100644
+index 0000000..48a7219
+--- /dev/null
++++ b/src/render/rt64_screen_filter.h
+@@ -0,0 +1,21 @@
++//
++// RT64
++//
++
++#pragma once
++
++#include <cstdint>
++
++namespace RT64 {
++    // Post-process filters for the final picture, applied by the VI pass
++    // (shaders/VideoInterfacePS.hlsl). Safe to set from any thread.
++    enum class ScreenFilter : uint32_t {
++        None = 0,
++        CRT = 1, // Timothy Lottes' CRT shader, flat (no tube curve)
++        Scanlines = 2,
++        LCD = 3, // LCD3x, a handheld LCD grid
++    };
++
++    void setScreenFilter(ScreenFilter filter);
++    ScreenFilter getScreenFilter();
++};

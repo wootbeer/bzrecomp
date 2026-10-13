@@ -38,6 +38,7 @@
 #include "recompui/program_config.h"
 #include "recompui/renderer.h"
 #include "recompui/config.h"
+#include "rt64_screen_filter.h"
 #include "util/file.h"
 
 #include "recompinput/input_state.h"
@@ -201,6 +202,8 @@ static void update_gfx(void*) {
         }
     }
     bz::set_widescreen_scale(widescreen_scale);
+
+    RT64::setScreenFilter(static_cast<RT64::ScreenFilter>(bz::config::get_screen_filter()));
 }
 
 // --- Audio ----------------------------------------------------------------
@@ -481,7 +484,7 @@ int main(int argc, char** argv) {
     // created and finalized here, before recomp::start().
     recompui::config::GeneralTabOptions general_tab_options{};
     bz::config::add_general_options(recompui::config::create_general_tab(general_tab_options));
-    recompui::config::create_graphics_tab();
+    bz::config::add_graphics_options(recompui::config::create_graphics_tab());
     recompui::config::create_controls_tab();
     recompui::config::create_sound_tab();
     recompui::config::create_mods_tab();
