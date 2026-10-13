@@ -52,6 +52,14 @@ void bz_beam_begin(uint8_t* rdram, int32_t beam, uint64_t* head);
 void bz_beam_end(uint8_t* rdram, uint64_t* head);
 void bz_shadow_quad_bottom(uint8_t* rdram, uint64_t* head);
 
+// src/game/draw_distance.cpp: the far distance and view width used to cull.
+void bz_ground_extent(uint8_t* rdram, int32_t columns, int32_t rows, float start_x, float start_z);
+void bz_far_distance(float* far);
+void bz_object_far(int32_t camera, float dx, float dz, float radius, float* far);
+void bz_effect_check_point(int32_t point, uint32_t radius_bits);
+void bz_effect_far(uint8_t* rdram, int32_t camera, float* far);
+void bz_cull_half_width(float* half_width);
+
 // src/game/widescreen_sprites.cpp: let effect sprites reach the widened
 // view (ovl1 func_8016765C = drawer 0, func_80166BD0 = drawer 1).
 void bz_sprites_begin(uint8_t* rdram, int drawer, uint64_t* head, uint64_t* tail);
