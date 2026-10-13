@@ -31,7 +31,6 @@ See [CHANGELOG.md](CHANGELOG.md).
 
 Known:  
 - Beta status. Tested on Windows.  
-- Draw Distance is experimental.  
   
 Else:  
 - Please see the “Issues” section in GitHub.  

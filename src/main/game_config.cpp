@@ -1,5 +1,5 @@
 // Game-specific options on the General tab (which pak each controller holds,
-// and local multiplayer) and the Graphics tab (Screen Filter, Draw Distance). See
+// and local multiplayer) and the Graphics tab (Screen Filter). See
 // include/bz_config.h.
 #include "bz_config.h"
 
@@ -24,12 +24,6 @@ namespace {
         {bz::config::ScreenFilter::CRT, "CRT", "CRT"},
         {bz::config::ScreenFilter::Scanlines, "Scanlines", "Scanlines"},
         {bz::config::ScreenFilter::LCD, "LCD", "LCD"},
-    };
-
-    const std::string draw_distance_id = "draw_distance";
-    const std::vector<recomp::config::ConfigOptionEnumOption> draw_distance_options = {
-        {bz::config::DrawDistance::Original, "Original", "Original"},
-        {bz::config::DrawDistance::Extended, "Extended", "Extended"},
     };
 
     // Looked up by id on each read: the Config& create_general_tab() returns
@@ -104,13 +98,6 @@ void bz::config::add_graphics_options(recomp::config::Config& graphics) {
         ScreenFilter::None
     );
 
-    graphics.add_enum_option(
-        draw_distance_id,
-        "Draw Distance",
-        "Experimental",
-        draw_distance_options,
-        DrawDistance::Original
-    );
 }
 
 bz::config::ScreenFilter bz::config::get_screen_filter() {
@@ -120,9 +107,3 @@ bz::config::ScreenFilter bz::config::get_screen_filter() {
     return static_cast<ScreenFilter>(std::get<uint32_t>(recompui::config::get_graphics_config().get_option_value(screen_filter_id)));
 }
 
-bz::config::DrawDistance bz::config::get_draw_distance() {
-    if (!graphics_options_added) {
-        return DrawDistance::Original;
-    }
-    return static_cast<DrawDistance>(std::get<uint32_t>(recompui::config::get_graphics_config().get_option_value(draw_distance_id)));
-}

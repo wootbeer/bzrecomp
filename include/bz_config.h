@@ -28,18 +28,10 @@ namespace bz::config {
         LCD,
     };
 
-    // How far objects (and the ground already built around the view) are
-    // drawn (src/game/draw_distance.cpp).
-    enum class DrawDistance : uint32_t {
-        Original,
-        Extended,
-    };
-
-    // Adds Screen Filter and Draw Distance to the Graphics tab. Call between
+    // Adds Screen Filter to the Graphics tab. Call between
     // recompui::config::create_graphics_tab() and recompui::config::finalize().
     void add_graphics_options(recomp::config::Config& graphics);
     ScreenFilter get_screen_filter();
-    DrawDistance get_draw_distance();
 
     Accessory get_accessory(int port);
     bool get_local_multiplayer();
