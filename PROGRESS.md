@@ -111,14 +111,15 @@ leave the game's own behaviour, look and balance alone.
   framebuffer counts towards it now; drawing is unchanged.
 - **Draw Distance** (Graphics tab, Experimental, `src/game/draw_distance.cpp`;
   Original by default). Objects were drawn to the camera's far distance, 200
-  units, while the ground grid (a fixed size, placed off-centre around the
-  view) reaches about 300 units ahead but less towards a widescreen view's
-  sides. With Extended, something past 200 units is drawn as long as it
-  stands on that grid (10 units in from its edge), up to 300, and the far
-  plane goes to 300. The fog (128 to 200 units) moves out by the same factor
-  and is mapped with the new far plane, so the distance still fades in; its
-  16-bit multiplier is held at 32767 (the narrower depth range would wrap it
-  to full fog). Applied at each read of the distance, so it can change
+  units. The ground grid is a fixed size placed off-centre around the view;
+  across the 4:3 view it ends about 225 to 250 units out. With Extended, that
+  reach is worked out each frame (smoothed, minus 10 units), and something
+  past 200 is drawn as long as it stands on the grid and is within it, and
+  the fog (128 to 200 units, set every frame) moves out to it so the ground
+  fades before its edge. About 15% further in practice; more needs a bigger
+  ground grid. The far plane goes to 300 and the fog's depth mapping follows
+  it; the fog's 16-bit multiplier is held at 32767 (a narrower depth range
+  would wrap it to full fog). Applied at each read, so it can change
   mid-game. The object and effect culls' view width (4:3) is widened in
   Expand, so nothing vanishes in the widescreen sides.
 - **Screen filters** (Graphics tab, Screen Filter: None, CRT, Scanlines,

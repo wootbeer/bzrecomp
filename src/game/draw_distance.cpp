@@ -11,17 +11,20 @@
 // 200 towards the sides of a widescreen view, and the far plane cut it off at
 // 200.
 //
-// With Draw Distance at Extended, something past the game's distance is drawn
-// as long as it stands on that grid (with a margin), up to 1.5 times the
-// distance (about where the grid ends straight ahead), so nothing is drawn
-// floating past the ground's edge; the far plane and the depth buckets get 1.5
-// times the distance so those objects and the ground under them show.
+// With Draw Distance at Extended, the ground's reach across the (4:3) view is
+// worked out each frame from the grid the builder has just placed (as a
+// factor of the game's distance, 1 to 1.5, smoothed). Something past the
+// game's distance is drawn as long as it stands on that grid (with a margin)
+// and within that reach, so nothing is drawn floating past the ground's edge;
+// the far plane and the depth buckets get 1.5 times the distance so those
+// objects and the ground under them show.
 //
 // The fog (func_8002B12C) runs from 128 units to the far distance, mapped
 // to depth with camera + 0x1E4 / 0x1E8, which func_8002B8FC works out from
 // the far distance too. That read is extended like the others so the fog
-// lines up with the far plane, and the fog's start and end move out by the
-// same factor, so the distance still fades in instead of popping. The farther
+// lines up with the far plane, and the fog's start and end move out to the
+// ground's reach, so the ground still fades out before its edge instead of
+// ending in plain view. The game sets the fog every frame, so it follows. The farther
 // plane squeezes that range into less depth, so the fog multiplier (16-bit in
 // the command) would pass 32767 and wrap round to full fog: it's held at
 // 32767 instead, which starts the fog a unit or two sooner. The grid is the one the builder placed last (a frame behind for
@@ -55,6 +58,12 @@ namespace {
     };
     std::unordered_map<uint32_t, GroundBox> ground_boxes;  // by camera
 
+    // How far past the game's own distance the ground reaches across the
+    // view, as a factor of it (1 to kMaxFactor), smoothed so it doesn't jump
+    // when the grid moves a cell.
+    std::unordered_map<uint32_t, float> reach_factors;     // by camera
+    constexpr float kReachSmoothing = 0.1f;
+
     gpr kseg0(uint32_t address) {
         return (gpr)(int32_t)address;
     }
@@ -70,6 +79,43 @@ namespace {
         return bz::config::get_draw_distance() == bz::config::DrawDistance::Extended;
     }
 
+    float reach_factor(uint32_t camera) {
+        auto it = reach_factors.find(camera);
+        return it != reach_factors.end() ? it->second : 1.0f;
+    }
+
+    // Depth along a ray of the view (per unit of depth: dx, dz) at which it
+    // leaves the box.
+    float exit_depth(const GroundBox& box, float dx, float dz) {
+        float t = 1e30f;
+        if (dx > 1e-6f) t = std::min(t, box.max_x / dx);
+        if (dx < -1e-6f) t = std::min(t, box.min_x / dx);
+        if (dz > 1e-6f) t = std::min(t, box.max_z / dz);
+        if (dz < -1e-6f) t = std::min(t, box.min_z / dz);
+        return t;
+    }
+
+    // Where the ground ends across the game's own (4:3) view: the culls'
+    // depth is x * c34 + z * c38 and their side distance x * c38 - z * c34,
+    // visible while under c50 * depth, which gives the view's rays per unit
+    // of depth. The nearest edge along them is where the fog has to be thick.
+    float ground_reach(uint8_t* rdram, uint32_t camera, const GroundBox& box) {
+        const gpr cam = kseg0(camera);
+        const float c34 = read_float(rdram, cam, 0x34);
+        const float c38 = read_float(rdram, cam, 0x38);
+        const float k2 = c34 * c34 + c38 * c38;
+        if (k2 < 1e-6f) {
+            return 0.0f;
+        }
+        const float half_width = read_float(rdram, cam, 0x50);
+        float reach = 1e30f;
+        for (float side : { -1.0f, -0.5f, 0.0f, 0.5f, 1.0f }) {
+            const float l = side * half_width;
+            reach = std::min(reach, exit_depth(box, (c34 + c38 * l) / k2, (c38 - c34 * l) / k2));
+        }
+        return reach;
+    }
+
     // The far distance to use for something at (dx, dz) from the camera
     // (world units) with the given radius.
     float far_for(uint32_t camera, float far, float dx, float dz, float radius) {
@@ -83,7 +129,7 @@ namespace {
         const GroundBox& box = it->second;
         const float m = kEdgeMargin + std::max(radius, 0.0f);
         const bool on_ground = (dx >= box.min_x + m) && (dx <= box.max_x - m) && (dz >= box.min_z + m) && (dz <= box.max_z - m);
-        return on_ground ? far * kMaxFactor : far;
+        return on_ground ? far * reach_factor(camera) : far;
     }
 
     // The point the effect checks were called for (their $a1, a world
@@ -98,7 +144,17 @@ extern "C" void bz_ground_extent(uint8_t* rdram, int32_t columns, int32_t rows, 
     const uint32_t camera = (uint32_t)MEM_W(0, kseg0(kCurrentCameraPtr));
     const float x0 = start_x / 10.0f;
     const float z0 = start_z / 10.0f;
-    ground_boxes[camera] = { x0, x0 + float(std::max(columns - 1, 0)) * kCellWorld, z0, z0 + float(std::max(rows - 1, 0)) * kCellWorld };
+    const GroundBox box = { x0, x0 + float(std::max(columns - 1, 0)) * kCellWorld, z0, z0 + float(std::max(rows - 1, 0)) * kCellWorld };
+    ground_boxes[camera] = box;
+
+    const float far = read_float(rdram, kseg0(camera), 0x30);
+    if (far > 0.0f) {
+        const float target = std::clamp((ground_reach(rdram, camera, box) - kEdgeMargin) / far, 1.0f, kMaxFactor);
+        auto [it, inserted] = reach_factors.try_emplace(camera, target);
+        if (!inserted) {
+            it->second += (target - it->second) * kReachSmoothing;
+        }
+    }
 }
 
 // The far distance as the projection's far plane and for the depth buckets.
@@ -141,8 +197,9 @@ extern "C" void bz_fog_range(uint8_t* rdram, int32_t camera, float* start, float
     }
     const float far = read_float(rdram, kseg0((uint32_t)camera), 0x30);
     if ((*end > 0.0f) && (std::fabs(*end - far) < 1.0f)) {
-        *start *= kMaxFactor;
-        *end *= kMaxFactor;
+        const float factor = reach_factor((uint32_t)camera);
+        *start *= factor;
+        *end *= factor;
     }
 }
 
