@@ -58,6 +58,8 @@ void bz_far_distance(float* far);
 void bz_object_far(int32_t camera, float dx, float dz, float radius, float* far);
 void bz_effect_check_point(int32_t point, uint32_t radius_bits);
 void bz_effect_far(uint8_t* rdram, int32_t camera, float* far);
+void bz_fog_range(uint8_t* rdram, int32_t camera, float* start, float* end);
+void bz_fog_multiplier(float* multiplier);
 void bz_cull_half_width(float* half_width);
 
 // src/game/widescreen_sprites.cpp: let effect sprites reach the widened

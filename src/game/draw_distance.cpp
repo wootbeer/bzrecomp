@@ -12,10 +12,19 @@
 // 200.
 //
 // With Draw Distance at Extended, something past the game's distance is drawn
-// as long as it stands on that grid (with a margin), up to twice the distance,
-// so nothing is drawn floating past the ground's edge; the far plane and the
-// depth buckets get twice the distance so those objects and the ground under
-// them show. The grid is the one the builder placed last (a frame behind for
+// as long as it stands on that grid (with a margin), up to 1.5 times the
+// distance (about where the grid ends straight ahead), so nothing is drawn
+// floating past the ground's edge; the far plane and the depth buckets get 1.5
+// times the distance so those objects and the ground under them show.
+//
+// The fog (func_8002B12C) runs from 128 units to the far distance, mapped
+// to depth with camera + 0x1E4 / 0x1E8, which func_8002B8FC works out from
+// the far distance too. That read is extended like the others so the fog
+// lines up with the far plane, and the fog's start and end move out by the
+// same factor, so the distance still fades in instead of popping. The farther
+// plane squeezes that range into less depth, so the fog multiplier (16-bit in
+// the command) would pass 32767 and wrap round to full fog: it's held at
+// 32767 instead, which starts the fog a unit or two sooner. The grid is the one the builder placed last (a frame behind for
 // the reads before it). The stored distance is never changed, so the option
 // can change at any time.
 //
@@ -24,6 +33,7 @@
 // half-width (camera + 0x1D8). In Expand both are widened by the widescreen
 // factor, so nothing vanishes in the widened sides of the view.
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <unordered_map>
@@ -38,7 +48,7 @@ namespace {
     constexpr uint32_t kCurrentCameraPtr = 0x800A47A8;
     constexpr float kCellWorld = 10.0f;      // a ground cell (100 vertex units)
     constexpr float kEdgeMargin = 10.0f;     // stay this far inside the ground's edge
-    constexpr float kMaxFactor = 2.0f;       // and within twice the game's own distance
+    constexpr float kMaxFactor = 1.5f;       // and within 1.5 times the game's own distance
 
     struct GroundBox {
         float min_x, max_x, min_z, max_z;    // world units, relative to the camera
@@ -120,6 +130,25 @@ extern "C" void bz_effect_far(uint8_t* rdram, int32_t camera, float* far) {
     const float dx = read_float(rdram, p, 0x0) - read_float(rdram, cam, 0x0);
     const float dz = read_float(rdram, p, 0x8) - read_float(rdram, cam, 0x8);
     *far = far_for((uint32_t)camera, *far, dx, dz, check_radius);
+}
+
+// The fog's start and end (world units) for the camera, before they're mapped
+// to depth. Only the game's own fade to its far distance moves: other scenes
+// (the menus' 3D) set fog of their own.
+extern "C" void bz_fog_range(uint8_t* rdram, int32_t camera, float* start, float* end) {
+    if (!extended()) {
+        return;
+    }
+    const float far = read_float(rdram, kseg0((uint32_t)camera), 0x30);
+    if ((*end > 0.0f) && (std::fabs(*end - far) < 1.0f)) {
+        *start *= kMaxFactor;
+        *end *= kMaxFactor;
+    }
+}
+
+// The fog multiplier, just before it's truncated to 16 bits.
+extern "C" void bz_fog_multiplier(float* multiplier) {
+    *multiplier = std::clamp(*multiplier, -32768.0f, 32767.0f);
 }
 
 // A read of a cull's view half-width (slope or screen units), just loaded.

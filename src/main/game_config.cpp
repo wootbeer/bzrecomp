@@ -107,14 +107,9 @@ void bz::config::add_graphics_options(recomp::config::Config& graphics) {
     graphics.add_enum_option(
         draw_distance_id,
         "Draw Distance",
-        "How far away objects are drawn."
-        "<br/><br/>"
-        "<b>Original</b>: as on the N64, 200 units.<br/>"
-        "<b>Extended</b>: out to the edge of the ground the game has already built around your view "
-        "(up to twice as far, depending on where you're facing), and that ground shows too, "
-        "so nothing appears floating past it.",
+        "Experimental",
         draw_distance_options,
-        DrawDistance::Extended
+        DrawDistance::Original
     );
 }
 

@@ -323,6 +323,21 @@ func = "func_8002B8FC"
 before_vram = 0x8002b97c
 text = "    bz_far_distance(&ctx->f0.fl);"
 
+[[patches.hook]]  # lwc1 $f4, 0x1D0($s5): far ($f2) for the fog's depth mapping (+0x1E4/+0x1E8), camera in $s5
+func = "func_8002B8FC"
+before_vram = 0x8002c100
+text = "    bz_far_distance(&ctx->f2.fl);"
+
+[[patches.hook]]  # mtc1 $zero, $f0: the fog's start ($f20) and end ($f24), camera in $s3
+func = "func_8002B12C"
+before_vram = 0x8002b500
+text = "    bz_fog_range(rdram, (int32_t)ctx->r19, &ctx->f20.fl, &ctx->f24.fl);"
+
+[[patches.hook]]  # trunc.w.s $f10, $f2: the fog multiplier ($f2) before it's made 16-bit
+func = "func_8002B12C"
+before_vram = 0x8002b5b8
+text = "    bz_fog_multiplier(&ctx->f2.fl);"
+
 [[patches.hook]]  # addu $a1, $zero, $zero: far ($f0) sizing the depth buckets, camera in $v0
 func = "func_80030624"
 before_vram = 0x80030650

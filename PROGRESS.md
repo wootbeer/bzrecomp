@@ -109,16 +109,18 @@ leave the game's own behaviour, look and balance alone.
   folded it into the frame's overall scissor, which is what decides whether
   draws span the screen in Expand. Only the part of a scissor on the
   framebuffer counts towards it now; drawing is unchanged.
-- **Draw Distance** (Graphics tab, `src/game/draw_distance.cpp`). Objects
-  were drawn to the camera's far distance, 200 units, while the ground grid
-  (a fixed size, placed off-centre around the view) reaches about 300 units
-  ahead but less towards a widescreen view's sides. With Extended (the
-  default), something past 200 units is drawn as long as it stands on that
-  grid (10 units in from its edge), up to 400, and the far plane goes to 400
-  so the ground built there shows: nothing floats past the ground's edge.
-  Effects use the same test. Applied at each read of the distance, so it can
-  change mid-game. The object and effect culls' view width (4:3) is widened
-  in Expand, so nothing vanishes in the widescreen sides.
+- **Draw Distance** (Graphics tab, Experimental, `src/game/draw_distance.cpp`;
+  Original by default). Objects were drawn to the camera's far distance, 200
+  units, while the ground grid (a fixed size, placed off-centre around the
+  view) reaches about 300 units ahead but less towards a widescreen view's
+  sides. With Extended, something past 200 units is drawn as long as it
+  stands on that grid (10 units in from its edge), up to 300, and the far
+  plane goes to 300. The fog (128 to 200 units) moves out by the same factor
+  and is mapped with the new far plane, so the distance still fades in; its
+  16-bit multiplier is held at 32767 (the narrower depth range would wrap it
+  to full fog). Applied at each read of the distance, so it can change
+  mid-game. The object and effect culls' view width (4:3) is widened in
+  Expand, so nothing vanishes in the widescreen sides.
 - **Screen filters** (Graphics tab, Screen Filter: None, CRT, Scanlines,
   LCD), ported from the Turok: Rage Wars recomp (`lib-patches/rt64/0010`, its
   0005): CRT from Timothy Lottes' CRT shader, LCD from LCD3x, both public
