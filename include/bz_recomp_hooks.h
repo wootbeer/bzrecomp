@@ -73,6 +73,19 @@ void bz_hud_text_begin(uint8_t* rdram);
 void bz_hud_text_end(uint8_t* rdram);
 void bz_hud_text_line(uint8_t* rdram, int32_t entry, uint64_t* head_reg);
 void bz_hud_text_done(uint8_t* rdram, uint64_t* head_reg);
+void bz_hud_text_scissor(uint8_t* rdram, uint64_t* head_reg);
+void bz_hud_text_glyph(uint8_t* rdram, int32_t end, int32_t line, int32_t sp);
+
+// src/game/widescreen_markers.cpp: the target markers past the 4:3 edges in
+// Expand.
+void bz_markers_view_rect(uint8_t* rdram, int32_t rect);
+void bz_markers_texrect(uint8_t* rdram, int32_t head, int32_t ulx, int32_t uly,
+                        int32_t width, int32_t height, int32_t dsdx, int32_t dtdy);
+void bz_markers_fill_args(int32_t x0, int32_t y0, int32_t x1, int32_t y1);
+void bz_markers_fill(uint8_t* rdram, int32_t fill);
+void bz_markers_scissor_args(int32_t x0, int32_t x1);
+void bz_markers_scissor(uint8_t* rdram, int32_t scissor, uint64_t* head);
+void bz_markers_view_scissor(uint8_t* rdram, int32_t scissor, uint64_t* head);
 
 #ifdef __cplusplus
 }

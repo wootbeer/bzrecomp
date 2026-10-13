@@ -24,8 +24,11 @@
 //   func_80033604 (one 0x28-byte queue entry per string, x at +4), called from
 //   func_801BB09C. Each string follows the element that queued it (hooks on
 //   the queuing functions record which side was being drawn), so a panel's
-//   text moves with its panel, labels placed in the 3D view (target names)
-//   stay put, and a string is never split. It draws through a
+//   text moves with its panel and a string is never split. The target
+//   markers' names and distances (widescreen_markers.cpp) stay centred but
+//   may go past the 4:3 edges: their scissor is opened to the widened view
+//   and their letters are written as extended rectangles, which can start
+//   left of the screen. It draws through a
 //   register copy of the overlay list's write pointer ($s3), so commands go
 //   through that register.
 //
@@ -70,8 +73,10 @@ namespace {
     constexpr int kLineListHead = 0x84;      // L3DEX2 (the radar grid)
     constexpr int kOverlayListHead = 0x90;
 
-    enum class Side { None, Left, Right };
+    // Wide: centred, but drawn across the whole widened view (marker text).
+    enum class Side { None, Left, Right, Wide };
 
+    constexpr uint16_t kOriginNoneBits = kOriginNone;
     Side main_side = Side::None;
     Side line_side = Side::None;
     Side overlay_side = Side::None;
@@ -102,6 +107,12 @@ namespace {
 
     // Switches the anchoring at the display-list write position `dl`.
     void write_side(DlWriter& dl, Side from, Side to) {
+        if (from == Side::Wide) {
+            from = Side::None;
+        }
+        if (to == Side::Wide) {
+            to = Side::None;
+        }
         if (from == to) {
             return;
         }
@@ -175,8 +186,12 @@ namespace {
     // and, per text queue slot, the side of the element that queued it.
     constexpr uint32_t kTextQueue = 0x800BF460;   // 0x28-byte entries
     constexpr uint32_t kTextQueueCount = 0x8006B150;
+    // func_800338C0 writes a line's G_SETSCISSOR only when it differs from
+    // the last one, kept here.
+    constexpr uint32_t kTextScissorCache = 0x800BF458;
     Side element_side = Side::None;
     Side queued_side[256];
+    bool wide_line = false;
 }
 
 void bz::set_widescreen_scale(float scale) {
@@ -193,6 +208,7 @@ extern "C" void bz_hud_radar_begin(uint8_t* rdram) {
 }
 
 extern "C" void bz_hud_piece_end(uint8_t* rdram) {
+    bz::markers_end(rdram);
     element_side = Side::None;
     set_side(rdram, Side::None);
 }
@@ -209,6 +225,12 @@ extern "C" void bz_hud_element_begin(uint8_t* rdram, int32_t element) {
     }
     element_side = side;
     set_side(rdram, side);
+    if (draw == 0x801ADCC0) {                    // target markers
+        bz::markers_begin(rdram);
+        if (bz::markers_drawing()) {
+            element_side = Side::Wide;
+        }
+    }
 }
 
 // func_80033EA0 / func_80032DE4 / func_80032F70, which queue a string: it takes the slot at
@@ -249,6 +271,61 @@ extern "C" void bz_hud_text_line(uint8_t* rdram, int32_t entry, uint64_t* head_r
     write_side(dl, overlay_side, to);
     *head_reg = (uint64_t)dl.head;
     overlay_side = to;
+    // Into or out of a wide line, the line's own scissor has to be written
+    // (and is then rewritten by bz_hud_text_scissor, or sets the 4:3 one
+    // back).
+    if (to == Side::Wide || wide_line) {
+        MEM_W(0, kseg0(kTextScissorCache)) = 0;
+        MEM_W(4, kseg0(kTextScissorCache)) = 0;
+    }
+    wide_line = (to == Side::Wide);
+}
+
+// func_800338C0, after the line's G_SETSCISSOR (written at $t7 - 8 when it
+// changed): for a wide line, the view's scissor widened like the 3D view.
+extern "C" void bz_hud_text_scissor(uint8_t* rdram, uint64_t* head_reg) {
+    if (!text_active || !wide_line) {
+        return;
+    }
+    const gpr scissor = (gpr)*head_reg - 8;
+    const uint32_t w0 = (uint32_t)MEM_W(0, scissor), w1 = (uint32_t)MEM_W(4, scissor);
+    if ((w0 >> 24) != 0xED) {
+        return;
+    }
+    const int border = (int)std::lround(kViewBorderX * std::max(widescreen_scale.load(std::memory_order_relaxed), 1.0f));
+    DlWriter dl{ rdram, scissor };
+    dl.cmd(0x64000005, (kOriginLeft << 2) | (kOriginRight << 14));    // gEXSetScissor
+    dl.cmd(pack16(border, w0 & 0xFFF), pack16(-border, w1 & 0xFFF));
+    *head_reg = (uint64_t)dl.head;
+}
+
+// func_800338C0, once a letter's G_TEXRECT, G_RDPHALF_1, G_RDPHALF_2 are
+// written (ending at `end`, the last command's second word): for a wide
+// line, an extended rectangle with the letter's unclamped position, kept by
+// the line state at `line` ($t8; shifts to 10.2 on the stack).
+extern "C" void bz_hud_text_glyph(uint8_t* rdram, int32_t end, int32_t line, int32_t sp) {
+    if (!text_active || !wide_line) {
+        return;
+    }
+    const gpr rect = (gpr)end - 20;
+    const uint32_t w0 = (uint32_t)MEM_W(0, rect);
+    if ((w0 >> 24) != 0xE4 || ((uint32_t)MEM_W(8, rect) >> 24) != 0xE1 || ((uint32_t)MEM_W(16, rect) >> 24) != 0xF1) {
+        return;
+    }
+    const int sx = MEM_W(8, (gpr)sp), sy = MEM_W(0xC, (gpr)sp);
+    const int ulx = MEM_W(0x404, (gpr)line) << sx;
+    const int lrx = MEM_W(0x40C, (gpr)line) << sx;
+    const int lry = MEM_W(0x410, (gpr)line) << sy;
+    const int uly = lry - ((lry - (int)((uint32_t)MEM_W(4, rect) & 0xFFF)) & 0xFFF);
+    const uint32_t tile = ((uint32_t)MEM_W(4, rect) >> 24) & 0x7;
+    const uint32_t st = (uint32_t)MEM_W(12, rect);
+    const uint32_t steps = (uint32_t)MEM_W(20, rect);
+    MEM_W(0, rect) = (int32_t)0x64000002u;                            // gEXTextureRectangle
+    MEM_W(4, rect) = (int32_t)(tile | (kOriginNoneBits << 3) | (kOriginNoneBits << 15));
+    MEM_W(8, rect) = (int32_t)pack16(ulx, uly);
+    MEM_W(12, rect) = (int32_t)pack16(lrx, lry);
+    MEM_W(16, rect) = (int32_t)st;
+    MEM_W(20, rect) = (int32_t)steps;
 }
 
 // func_80033604, after the last string, before it returns the write pointer.
@@ -256,10 +333,17 @@ extern "C" void bz_hud_text_done(uint8_t* rdram, uint64_t* head_reg) {
     for (Side& side : queued_side) {
         side = Side::None;
     }
-    if (overlay_side == Side::None) {
+    DlWriter dl{ rdram, (gpr)*head_reg };
+    if (wide_line) {
+        // The last line's scissor (the 4:3 view's) as the game wrote it.
+        wide_line = false;
+        dl.cmd((uint32_t)MEM_W(0, kseg0(kTextScissorCache)), (uint32_t)MEM_W(4, kseg0(kTextScissorCache)));
+        *head_reg = (uint64_t)dl.head;
+    }
+    if (overlay_side == Side::None || overlay_side == Side::Wide) {
+        overlay_side = Side::None;
         return;
     }
-    DlWriter dl{ rdram, (gpr)*head_reg };
     write_side(dl, overlay_side, Side::None);
     *head_reg = (uint64_t)dl.head;
     overlay_side = Side::None;

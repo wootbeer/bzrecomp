@@ -134,6 +134,15 @@ leave the game's own behaviour, look and balance alone.
   the cull and rewrite each sprite as an extended texture rectangle with its
   unclamped coordinates, drawn with the scissor opened to the widened view
   (`src/game/widescreen_sprites.cpp`).
+- **Target markers in widescreen** (`src/game/widescreen_markers.cpp`). The
+  brackets, names, distances and edge arrows over units and places are one
+  HUD element (ovl1 `func_801ADCC0`) that hid markers, and pinned the arrows,
+  at the 4:3 view's edges and drew them under the 4:3 scissor, so they were
+  cut off at the old screen edge. In Expand its view rectangle is widened by
+  the extra width on each side, its images, boxes and scissors are rewritten
+  as RT64's extended commands with their unclamped coordinates (they can
+  start left of the screen), and its text lines get a scissor and letters
+  that reach the widened view (`widescreen_hud.cpp`).
 - **Text bleed.** Scaled, filtered rectangles (the in-game font) blended in
   the next row of their packed texture when upscaled, leaving dots under each
   letter; `lib-patches/rt64/0005` ends the sampled range at the last row the

@@ -246,6 +246,57 @@ func = "func_80033604"
 before_vram = 0x80033874
 text = "    bz_hud_text_done(rdram, &ctx->r19);"
 
+[[patches.hook]]  # after the line's G_SETSCISSOR (written at $t7 - 8 if it changed)
+func = "func_800338C0"
+before_vram = 0x80033a5c
+text = "    bz_hud_text_scissor(rdram, &ctx->r15);"
+
+[[patches.hook]]  # a letter's G_RDPHALF_2 is written, ending at $t3; line state in $t8
+func = "func_800338C0"
+before_vram = 0x80033e58
+text = "    bz_hud_text_glyph(rdram, (int32_t)ctx->r11, (int32_t)ctx->r24, (int32_t)ctx->r29);"
+
+# Widescreen target markers (src/game/widescreen_markers.cpp).
+[[patches.hook]]  # after func_801BBF94: the view rectangle at $s4
+func = "ovl1_func_801ADCC0"
+before_vram = 0x801add18
+text = "    bz_markers_view_rect(rdram, (int32_t)ctx->r20);"
+
+[[patches.hook]]  # after func_801BBF94: the view rectangle at $s0
+func = "ovl1_func_801AEAFC"
+before_vram = 0x801aeb44
+text = "    bz_markers_view_rect(rdram, (int32_t)ctx->r16);"
+
+[[patches.hook]]  # image drawn: head $t8, x $t6, y $t5, size $s1 x $s2 (10.2), steps $t7, $s0
+func = "ovl1_func_801BA01C"
+before_vram = 0x801ba508
+text = "    bz_markers_texrect(rdram, (int32_t)ctx->r24, (int32_t)ctx->r14, (int32_t)ctx->r13, (int32_t)ctx->r17, (int32_t)ctx->r18, (int32_t)ctx->r15, (int32_t)ctx->r16);"
+
+[[patches.hook]]  # a box: corners in $a0-$a3
+func = "ovl1_func_801BBD04"
+before_vram = 0x801bbd04
+text = "    bz_markers_fill_args((int32_t)ctx->r4, (int32_t)ctx->r5, (int32_t)ctx->r6, (int32_t)ctx->r7);"
+
+[[patches.hook]]  # its G_FILLRECT at $s0, a G_RDPPIPESYNC after it
+func = "ovl1_func_801BBD04"
+before_vram = 0x801bbe50
+text = "    bz_markers_fill(rdram, (int32_t)ctx->r16);"
+
+[[patches.hook]]  # a scissor: x edges in $a0, $a2
+func = "ovl1_func_801BBB94"
+before_vram = 0x801bbb94
+text = "    bz_markers_scissor_args((int32_t)ctx->r4, (int32_t)ctx->r6);"
+
+[[patches.hook]]  # its G_SETSCISSOR at $a1, write pointer $t2
+func = "ovl1_func_801BBB94"
+before_vram = 0x801bbc4c
+text = "    bz_markers_scissor(rdram, (int32_t)ctx->r5, &ctx->r10);"
+
+[[patches.hook]]  # the view's G_SETSCISSOR at $t0, write pointer $a2
+func = "ovl1_func_801BBC54"
+before_vram = 0x801bbcc8
+text = "    bz_markers_view_scissor(rdram, (int32_t)ctx->r8, &ctx->r6);"
+
 # Interpolation IDs (src/game/interpolation_ids.cpp): func_8002DC40 draws one
 # object (render item in $s1): its model into the main list (head in $s0),
 # then its shadow into the list at graphics state + 0x94, built backwards
