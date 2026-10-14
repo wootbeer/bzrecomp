@@ -30,15 +30,23 @@ This converts the ROM, applies `lib-patches/`, builds N64Recomp and generates
 1. **File > Open > Folder...** and pick the repo folder. Visual Studio reads
    `CMakePresets.json` and configures the project.
 2. In the configuration dropdown on the toolbar, pick
-   **Windows x64 Debug (clang-cl)** (or RelWithDebInfo / Release).
+   **Windows x64 Release (clang-cl)** to play. Debug runs much slower, so use
+   it (or RelWithDebInfo) only when debugging.
 3. In the startup item dropdown (the green arrow), pick
    **BattlezoneRecompiled.exe**.
-4. **Build > Build All**, then **F5** to run it under the debugger.
+4. **Build > Build All**, then **F5** to run it.
 
 The build copies `assets/`, SDL2 and the DXC DLLs next to the exe, so it runs
-from the build folder (`build\windows-debug\`). On first launch it asks for the
+from the build folder (`build\windows-release\`, named after the
+configuration). On first launch it asks for the
 ROM. Rerun `setup-windows.ps1` after pulling changes to the symbol file,
-`battlezone.us.rev0.toml` or `lib-patches/`, then rebuild.
+`battlezone.us.rev0.toml` or `lib-patches/`, then rebuild. From a Developer
+PowerShell instead of Visual Studio:
+
+```powershell
+cmake --preset windows-release
+cmake --build --preset windows-release
+```
 
 For a release zip: `.\tools\package-windows.ps1 -Version 0.1.0`.
 

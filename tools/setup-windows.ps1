@@ -68,6 +68,9 @@ if ($LASTEXITCODE -ne 0) { throw "N64Recomp build failed." }
 if ($LASTEXITCODE -ne 0) { Get-Content N64Recomp.log -Tail 20; throw "N64Recomp failed (see N64Recomp.log)." }
 
 Write-Host ""
-Write-Host "Done. Now open this folder in Visual Studio (File > Open > Folder),"
-Write-Host "pick the 'Windows x64 Debug (clang-cl)' configuration, choose"
-Write-Host "BattlezoneRecompiled.exe as the startup item, then build and press F5."
+Write-Host "Done. Now build the game, either from this Developer PowerShell:"
+Write-Host "    cmake --preset windows-release"
+Write-Host "    cmake --build --preset windows-release"
+Write-Host "or in Visual Studio (File > Open > Folder), with the"
+Write-Host "'Windows x64 Release (clang-cl)' configuration and BattlezoneRecompiled.exe"
+Write-Host "as the startup item. (Debug builds run much slower; use them only for debugging.)"
