@@ -113,7 +113,11 @@ leave the game's own behaviour, look and balance alone.
   cull and the effect checks measured the view with its 4:3 width, so things at
   the sides of a widescreen view vanished before the screen edge; both are
   widened by the widescreen factor (about 3% of object checks are kept only by
-  it in a 16:9 run).
+  it in a 16:9 run). The ground is built to cover the view's footprint, worked out
+  by the camera setup (`func_8002B8FC`) from the 4:3 width, and its builders
+  skip cells by the same 4:3 slope, so it ended short of a widescreen view's
+  sides (plain to see in split screen, where hills were cut off at the
+  edges); the footprint's corners and the builders' slope are widened too.
 - A Draw Distance option was tried and removed (only about 15% further with the
   game's ground grid); see docs/DRAW_DISTANCE_NOTES.md.
 - **Screen filters** (Graphics tab, Screen Filter: None, CRT, Scanlines,
@@ -142,7 +146,10 @@ leave the game's own behaviour, look and balance alone.
   the extra width on each side, its images, boxes and scissors are rewritten
   as RT64's extended commands with their unclamped coordinates (they can
   start left of the screen), and its text lines get a scissor and letters
-  that reach the widened view (`widescreen_hud.cpp`).
+  that reach the widened view (`widescreen_hud.cpp`). Only views that span the
+  screen's width are widened (RT64 keeps four-player split screen 4:3), and
+  each within its own view's height, so markers stay inside their player's
+  view.
 - **Text bleed.** Scaled, filtered rectangles (the in-game font) blended in
   the next row of their packed texture when upscaled, leaving dots under each
   letter; `lib-patches/rt64/0005` ends the sampled range at the last row the
@@ -173,7 +180,8 @@ leave the game's own behaviour, look and balance alone.
 ## Next
 
 - Windows build and testing on real GPUs.
-- Play through more missions; multiplayer.
+- Play through more missions. Split screen (2 and 4 players) runs; its HUD
+  stays centred in widescreen.
 - Frame pacing at higher framerates.
 
 ## Where things are

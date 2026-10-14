@@ -16,6 +16,10 @@
 // In Expand, RT64 places all of this relative to the widened 3D view, but it
 // stopped at the 4:3 edges.
 //
+// Only views that span the screen's width are widened by RT64 (in four-player
+// split screen the picture stays 4:3), so only those markers are opened up,
+// and only within their own view's height.
+//
 // Hooks: the view rectangle is widened by the extra width on each side, each
 // rectangle the drawers write is rewritten as RT64's extended rectangle with
 // its unclamped coordinates, the scissors as extended scissors (the view's
@@ -35,8 +39,6 @@ namespace {
     constexpr uint16_t kOriginNone = 0x800;
     constexpr int kFbWidth = 640;
     constexpr int kViewBorderX = 16 * 4;          // the game's 3D scissor, 10.2
-    constexpr int kViewTop = 8 * 4;
-    constexpr int kViewBottom = (240 - 8) * 4;
 
     constexpr uint32_t kGfxStatePtr = 0x800A4768;
     constexpr int kOverlayListHead = 0x90;
@@ -67,6 +69,11 @@ namespace {
         put(rdram, at + 8, pack16(border, uly), pack16(-border, lry));
     }
 
+    // The view being drawn: its rectangle (framebuffer pixels: x0, y0, x1, y1
+    // as halfwords at +0x10) hangs off the current view, *(0x801BD2C0) + 0x18.
+    constexpr uint32_t kCurrentView = 0x801BD2C0;
+    constexpr int kViewEdgeTolerance = 16;
+
     gpr overlay_head_ptr(uint8_t* rdram) {
         return kseg0((uint32_t)MEM_W(0, kseg0(kGfxStatePtr))) + kOverlayListHead;
     }
@@ -77,15 +84,29 @@ bool bz::markers_drawing() {
 }
 
 void bz::markers_begin(uint8_t* rdram) {
-    drawing = bz::get_widescreen_scale() > 1.0f;
-    if (!drawing) {
+    drawing = false;
+    if (bz::get_widescreen_scale() <= 1.0f) {
         return;
     }
+    const gpr view_ptr = kseg0((uint32_t)MEM_W(0, kseg0(kCurrentView)));
+    if (view_ptr == 0) {
+        return;
+    }
+    const gpr view = kseg0((uint32_t)MEM_W(0x18, view_ptr));
+    if (view == 0) {
+        return;
+    }
+    const int x0 = MEM_H(0x10, view), y0 = MEM_H(0x12, view);
+    const int x1 = MEM_H(0x14, view), y1 = MEM_H(0x16, view);
+    if (x0 > kViewBorderX / 4 + kViewEdgeTolerance || x1 < kFbWidth - kViewBorderX / 4 - kViewEdgeTolerance) {
+        return;                                                        // not a full-width view
+    }
+    drawing = true;
     const gpr head_ptr = overlay_head_ptr(rdram);
     gpr head = kseg0((uint32_t)MEM_W(0, head_ptr));
     put(rdram, head, 0xE0525464, 0x10000064);                          // gEXEnable
     put(rdram, head + 8, 0x64000017, 0);                               // gEXPushScissor
-    put_view_scissor(rdram, head + 16, kViewTop, kViewBottom);
+    put_view_scissor(rdram, head + 16, y0 * 4, y1 * 4);
     MEM_W(0, head_ptr) = (int32_t)(uint32_t)(head + 32);
 }
 
