@@ -35,7 +35,7 @@ See [CHANGELOG.md](CHANGELOG.md).
 ## Issues and Limitations
 
 Known:  
-- Beta status. Tested on Windows.  
+- Beta status. Tested on Windows and Linux.  
   
 Else:  
 - Please see the “Issues” section in GitHub.  
