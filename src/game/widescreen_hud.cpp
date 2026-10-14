@@ -38,8 +38,6 @@
 #include <atomic>
 #include <cmath>
 #include <cstdint>
-#include <cstdlib>
-#include <cstdio>
 
 #include "recomp.h"
 
@@ -81,7 +79,6 @@ namespace {
     Side line_side = Side::None;
     Side overlay_side = Side::None;
     bool text_active = false;
-    bool log_text = false;
 
     gpr kseg0(uint32_t address) {
         return (gpr)(int32_t)address;
@@ -242,16 +239,11 @@ extern "C" void bz_hud_text_queued(uint8_t* rdram) {
 }
 
 // func_801BB09C (the text flush) is about to run for the in-game frame.
-extern "C" void bz_hud_text_begin(uint8_t* rdram) {
+extern "C" void bz_hud_text_begin(uint8_t* /*rdram*/) {
     text_active = active();
-    static bool checked = false;
-    if (!checked) {
-        checked = true;
-        log_text = std::getenv("BZ_LOG_HUD_TEXT") != nullptr;
-    }
 }
 
-extern "C" void bz_hud_text_end(uint8_t* rdram) {
+extern "C" void bz_hud_text_end(uint8_t* /*rdram*/) {
     text_active = false;
 }
 
@@ -263,10 +255,6 @@ extern "C" void bz_hud_text_line(uint8_t* rdram, int32_t entry, uint64_t* head_r
     }
     const uint32_t slot = ((uint32_t)entry - kTextQueue) / 0x28;
     Side to = (slot < 256) ? queued_side[slot] : Side::None;
-    if (log_text) {
-        int x = (int16_t)MEM_H(4, (gpr)entry), y = (int16_t)MEM_H(6, (gpr)entry);
-        fprintf(stderr, "[hud text] x %d y %d id %u side %d\n", x, y, (uint16_t)MEM_HU(0, (gpr)entry), (int)to);
-    }
     DlWriter dl{ rdram, (gpr)*head_reg };
     write_side(dl, overlay_side, to);
     *head_reg = (uint64_t)dl.head;

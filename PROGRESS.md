@@ -4,15 +4,16 @@ The goal is the original game, running natively: fixes are limited to what the
 PC port needs (timing, rendering and runtime differences from the N64), and
 leave the game's own behaviour, look and balance alone.
 
-## Working (tested on Linux, llvmpipe software Vulkan)
+## Working (Windows; also checked on Linux)
 
 - Boot: Controller Pak check (creates the save note), copyright screen
   ("Expansion Pak detected"), Crave and Climax logos, title screen.
 - Attract-mode demos (in-game 3D, every few logo cycles).
-- Menus: single player, campaign select, the Rumble Pak prompt.
-- Campaign missions: the first American mission loads and plays; the tank
-  drives and turns, the cockpit HUD and radar work. Ran several minutes
-  without a crash or stall.
+- Menus: single player, campaign and mission select, multiplayer setup, the
+  Rumble Pak prompt.
+- Training, the first commander missions (completed, with the next mission
+  unlocking after saving) and campaign missions.
+- Local multiplayer: 2- and 4-player split screen.
 - Saves: Controller Pak emulation, standard `.mpk` files (from btgarecomp).
 - Audio: the game's standard libultra `aspMain`, recompiled from the ROM.
 
@@ -168,20 +169,21 @@ leave the game's own behaviour, look and balance alone.
   not yet confirmed against real hardware.
 - Once, with a Controller Pak save present, a decompress got a bad destination
   (0xA0000000) and crashed. Not reproduced since the module unload-order fix.
-- Windows builds run (tested by hand).
 - The plasma rifle's bolt passes through the soldier's back when fired on
   foot: the game spawns it at the soldier's own position and draws it from
   there (as on the original; checked with interpolation off).
-- Widescreen HUD anchoring covers the gameplay HUD seen so far (training
-  mission, first campaign mission); other vehicles' or modes' HUD elements may
-  still sit in the centred 4:3 area. The message box stays centred.
-- Only the first campaign mission has been played.
+- Widescreen HUD anchoring covers the gameplay HUD seen so far (training,
+  the first campaign and commander missions); other vehicles' or modes' HUD
+  elements may still sit in the centred 4:3 area. The message box and the
+  split-screen HUD stay centred.
+- Target markers move in steps of two of the game's pixels, a slight wobble
+  at high resolutions (as on the original).
+- Only the early missions have been played.
 
 ## Next
 
-- Windows build and testing on real GPUs.
-- Play through more missions. Split screen (2 and 4 players) runs; its HUD
-  stays centred in widescreen.
+- Play through more missions.
+- A bigger draw distance (docs/DRAW_DISTANCE_NOTES.md).
 - Frame pacing at higher framerates.
 
 ## Where things are

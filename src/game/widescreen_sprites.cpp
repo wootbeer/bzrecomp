@@ -48,10 +48,6 @@ namespace {
         return bz::get_widescreen_scale() > 1.0f;
     }
 
-    gpr kseg0(uint32_t address) {
-        return (gpr)(int32_t)address;
-    }
-
     uint32_t pack16(int hi, int lo) {
         return ((uint32_t)(uint16_t)(int16_t)hi << 16) | (uint16_t)(int16_t)lo;
     }

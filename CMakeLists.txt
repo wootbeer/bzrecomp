@@ -406,7 +406,8 @@ if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_link_libraries(BattlezoneRecompiled PRIVATE "-latomic -static-libstdc++" ${CMAKE_DL_LIBS} Threads::Threads)
 endif()
 
-# TODO fix the rt64 CMake script so that this doesn't need to be duplicated here
+# The shader compile options below duplicate rt64's own CMake script, which
+# doesn't export them.
 # For DXC
 set (DXC_COMMON_OPTS "-I${PROJECT_SOURCE_DIR}/src")
 set (DXC_DXIL_OPTS "-Wno-ignored-attributes")

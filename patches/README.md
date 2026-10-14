@@ -4,10 +4,9 @@ C code compiled for the N64 (MIPS) and recompiled alongside the game, for
 changes that replace a whole game function. A `RECOMP_PATCH` function here
 takes the place of the original function of the same name.
 
-- `recompui_patches.c`: will hold the patch of Battlezone's per-VI swap
-  routine that adds the frontend's per-frame UI pump. That routine hasn't
-  been identified yet (see the TODO in the file), so for now it only defines
-  the not-yet-wired helper.
+- `recompui_patches.c`: a helper for the frontend's per-frame UI callback
+  pump, used by mods that build their own UI. Nothing needs it yet, so it
+  isn't called; the file says where it would go.
 
 The build is automatic: `make` here produces `patches.elf` (through WSL on
 Windows, since the Windows clang builds have no MIPS backend), then N64Recomp

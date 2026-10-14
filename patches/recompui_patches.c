@@ -1,11 +1,11 @@
 #include "patches.h"
 #include "ui_funcs.h"
 
-// recompui's per-frame UI callback pump (recomp_run_ui_callbacks) has to be
-// called from the guest once per frame, or the in-game config menu opens but
-// never responds to input.
-//
-// TODO(bz): find Battlezone's per-VI swap function and patch it.
+// recompui's per-frame UI callback pump (recomp_run_ui_callbacks) runs the
+// callbacks of UI that mods build with recompui. Nothing calls it yet: the
+// config menu doesn't need it in this port, and no mod UI exists. If that
+// changes, call it once per frame from a patch of the game's per-VI swap
+// routine.
 //
 // In the BattleTanx: Global Assault port this was a RECOMP_PATCH that
 // replaced that game's VI-swap-throttle routine (reached once per real VI
@@ -27,9 +27,8 @@
 //     }
 //
 // and declare any original game functions it calls as plain externs (they
-// resolve by name through patches.toml's func_reference_syms_file). Until
-// then nothing calls the helper below; it only exists so the patch pipeline
-// has a real function to build and so the hook point is ready to use.
+// resolve by name through patches.toml's func_reference_syms_file). The
+// helper below also gives the patch pipeline a real function to build.
 void bz_run_ui_callbacks_per_vi(void) {
     recomp_run_ui_callbacks();
 }

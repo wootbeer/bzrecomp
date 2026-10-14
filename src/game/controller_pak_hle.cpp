@@ -1,10 +1,7 @@
 // Controller Pak (memory card) saves.
 //
-// Games that save to a Controller Pak do it through libultra's osPfs* file
-// API. TODO(bz): confirm Battlezone: Rise of the Black Dogs saves this way
-// (and has no cartridge EEPROM/SRAM/Flash save; see .save_type in
-// src/main/main.cpp). N64Recomp
-// replaces those functions with *_recomp versions, which stock librecomp
+// Battlezone: Rise of the Black Dogs saves its progress to a Controller Pak,
+// through libultra's osPfs* file API. N64Recomp replaces those functions with *_recomp versions, which stock librecomp
 // (librecomp/src/pak.cpp) implements as "no pak inserted". These
 // definitions take their place (with all ten defined here, the linker never
 // pulls pak.cpp's object out of librecomp) and back each controller's pak
@@ -23,7 +20,7 @@
 // from the General tab (src/main/game_config.cpp). libultra games commonly
 // probe each controller with osPfsInitPak and fall back to osMotorInit when
 // that returns PFS_ERR_ID_FATAL, so a Rumble Pak port answers with exactly
-// that. TODO(bz): check how this game probes its paks.
+// that.
 #include <array>
 #include <cstdio>
 #include <cstring>

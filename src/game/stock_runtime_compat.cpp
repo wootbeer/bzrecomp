@@ -6,8 +6,7 @@
 // building against a runtime fork that already has them.
 //
 // Each implementation is a reading of real libultra behavior. They were
-// written and verified for the BattleTanx: Global Assault port; anything
-// that depends on this game's own data layout is marked TODO(bz).
+// written and verified for the BattleTanx: Global Assault port.
 
 #include "ultramodern/ultra64.h"
 #include "ultramodern/ultramodern.hpp"
