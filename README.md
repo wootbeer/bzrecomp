@@ -21,6 +21,11 @@ Place in an accessible folder onto your device.
   
 Add a blank portable.txt in the application's folder to make portable if you want to save settings locally.  
   
+## Linux and Steam Deck  
+Download the Linux build and run BattlezoneRecompiled-x86_64.AppImage (make it executable first if needed). Settings and saves go in ~/.config/bzrecomp.  
+  
+On Steam Deck, in Desktop Mode, add the AppImage to Steam with "Add a Non-Steam Game", then play it from Gaming Mode.  
+  
 ## Building  
 See [BUILDING.md](BUILDING.md).
   

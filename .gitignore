@@ -77,6 +77,7 @@ assets/unk_*.bin
 
 # Release packaging (tools/package-windows.ps1)
 build-release/
+build-release-linux/
 dist/
 
 # Python bytecode

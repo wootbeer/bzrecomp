@@ -338,6 +338,7 @@ static std::string get_game_thread_name(const OSThread* t) {
 // src/main/crash_handler.cpp: records where N64 memory starts, so crash
 // reports can translate faulting host addresses back to N64 addresses.
 extern "C" void bz_crash_note_rdram(uint8_t* rdram);
+void bz_crash_set_fallback_folder(const char* folder);
 
 static void on_game_init(uint8_t* rdram, recomp_context*) {
     bz_crash_note_rdram(rdram);
@@ -459,6 +460,7 @@ int main(int argc, char** argv) {
     recompui::register_primary_font("Exo2.ttf", "Exo 2");
 
     recomp::register_config_path(recompui::file::get_app_folder_path());
+    bz_crash_set_fallback_folder(recompui::file::get_app_folder_path().string().c_str());
 
     for (const auto& game : supported_games) {
         recomp::register_game(game);

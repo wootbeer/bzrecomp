@@ -71,6 +71,9 @@ For a release zip: `.\tools\package-windows.ps1 -Version 0.1.0`.
 sudo apt-get install cmake ninja-build libsdl2-dev libgtk-3-dev libvulkan-dev lld llvm clang
 ```
 
+For a release AppImage: `tools/package-linux.sh 0.1.0`. It runs on systems
+with a glibc at least as new as the build machine's.
+
 ## 3. Put the ROM in place
 
 Place your dump at the repo root, named exactly

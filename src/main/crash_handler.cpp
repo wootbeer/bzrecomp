@@ -1,5 +1,6 @@
 // Crash reporting. On a fatal exception, writes crash_log.txt to the working
-// directory (the exe's folder when launched from Explorer) and stderr:
+// directory (the exe's folder when launched from Explorer; the settings folder
+// if that can't be written, as in the Linux AppImage) and stderr:
 // - the exception and its offset in the exe (as Event Viewer reports it)
 // - the recompiled game function that faulted, by N64 address
 // - for memory faults, the N64 address being accessed
@@ -26,6 +27,9 @@
 #include "librecomp/sections.h"
 
 namespace {
+    // Set up front: nothing is allocated once a crash is being reported.
+    char fallback_log_path[1024] = {};
+
     struct GameFunc {
         uintptr_t host;
         uint32_t vram;
@@ -137,7 +141,11 @@ namespace {
             words = std::min<uintptr_t>(top - sp, 0x10000) / sizeof(uintptr_t);
         }
         report(stderr, what, pc, module_base, has_access, access, write, stack, words);
-        if (FILE* f = fopen("crash_log.txt", "w")) {
+        FILE* f = fopen("crash_log.txt", "w");
+        if (f == nullptr && fallback_log_path[0] != '\0') {
+            f = fopen(fallback_log_path, "w");
+        }
+        if (f != nullptr) {
             report(f, what, pc, module_base, has_access, access, write, stack, words);
             fclose(f);
         }
@@ -203,6 +211,12 @@ namespace {
 // from the game entry's on_init_callback in src/main/main.cpp).
 extern "C" void bz_crash_note_rdram(uint8_t* rdram) {
     rdram_base = rdram;
+}
+
+// Where crash_log.txt goes when the working directory can't be written
+// (called from src/main/main.cpp once the settings folder is known).
+void bz_crash_set_fallback_folder(const char* folder) {
+    snprintf(fallback_log_path, sizeof(fallback_log_path), "%s/crash_log.txt", folder);
 }
 
 void bz_install_crash_handler(const SectionTableEntry* sections, size_t num_sections) {
