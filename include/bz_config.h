@@ -28,10 +28,18 @@ namespace bz::config {
         LCD,
     };
 
-    // Adds Screen Filter to the Graphics tab. Call between
+    // The glow around bright colours (RT64::Bloom, lib-patches/rt64/0011).
+    enum class Bloom : uint32_t {
+        Off,
+        Low,
+        High,
+    };
+
+    // Adds Screen Filter and Bloom to the Graphics tab. Call between
     // recompui::config::create_graphics_tab() and recompui::config::finalize().
     void add_graphics_options(recomp::config::Config& graphics);
     ScreenFilter get_screen_filter();
+    Bloom get_bloom();
 
     Accessory get_accessory(int port);
     bool get_local_multiplayer();

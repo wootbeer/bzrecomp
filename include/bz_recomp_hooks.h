@@ -54,6 +54,9 @@ void bz_shadow_quad_bottom(uint8_t* rdram, uint64_t* head);
 
 // src/game/widescreen_culling.cpp: the culls' view width in widescreen.
 void bz_cull_half_width(float* half_width);
+
+// src/game/cheats.cpp: the Cheats and Hacks tabs, applied each controller read.
+void bz_cheats_frame(uint8_t* rdram);
 void bz_cull_ground_footprint(uint8_t* rdram, int32_t camera, float* min_x, float* min_z,
                               float* max_x, float* max_z);
 

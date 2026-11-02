@@ -1,0 +1,568 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -518,6 +518,7 @@
+ build_compute_shader(rt64 "src/shaders/FbWriteDepthCS.hlsl" "src/shaders/FbWriteDepthCSMS.hlsl" "-D MULTISAMPLING")
+ build_compute_shader(rt64 "src/shaders/GaussianFilterRGB3x3CS.hlsl")
+ build_compute_shader(rt64 "src/shaders/BoxFilterCS.hlsl")
++build_compute_shader(rt64 "src/shaders/BloomCS.hlsl")
+ build_compute_shader(rt64 "src/shaders/BicubicScalingCS.hlsl")
+ build_compute_shader(rt64 "src/shaders/HistogramAverageCS.hlsl")
+ build_compute_shader(rt64 "src/shaders/HistogramClearCS.hlsl")
+diff --git a/src/hle/rt64_present_queue.cpp b/src/hle/rt64_present_queue.cpp
+--- a/src/hle/rt64_present_queue.cpp
++++ b/src/hle/rt64_present_queue.cpp
+@@ -341,6 +341,10 @@
+                     }
+                 }
+                 
++                if (renderParams.texture != nullptr) {
++                    viRenderer->prepareBloom(renderParams);
++                }
++
+                 commandList->setFramebuffer(swapChainFramebuffer);
+                 commandList->clearColor();
+ 
+diff --git a/src/render/rt64_descriptor_sets.h b/src/render/rt64_descriptor_sets.h
+--- a/src/render/rt64_descriptor_sets.h
++++ b/src/render/rt64_descriptor_sets.h
+@@ -662,11 +662,17 @@
+     struct VideoInterfaceDescriptorSet : RenderDescriptorSetBase {
+         uint32_t gInput;
+         uint32_t gSampler;
++        uint32_t gBloomSmall;
++        uint32_t gBloomLarge;
++        uint32_t gBloomSampler;
+ 
+-        VideoInterfaceDescriptorSet(const RenderSampler *sampler, RenderDevice *device = nullptr) {
++        VideoInterfaceDescriptorSet(const RenderSampler *sampler, const RenderSampler *bloomSampler, RenderDevice *device = nullptr) {
+             builder.begin();
+             gInput = builder.addTexture(1);
+             gSampler = builder.addImmutableSampler(2, &sampler);
++            gBloomSmall = builder.addTexture(3);
++            gBloomLarge = builder.addTexture(4);
++            gBloomSampler = builder.addImmutableSampler(5, &bloomSampler);
+             builder.end();
+ 
+             if (device != nullptr) {
+diff --git a/src/render/rt64_screen_filter.h b/src/render/rt64_screen_filter.h
+--- a/src/render/rt64_screen_filter.h
++++ b/src/render/rt64_screen_filter.h
+@@ -18,4 +18,16 @@
+ 
+     void setScreenFilter(ScreenFilter filter);
+     ScreenFilter getScreenFilter();
++
++    // A glow around the picture's bright, strongly coloured parts (lava,
++    // neon, energy shots), applied by the VI pass on top of any filter.
++    // Safe to set from any thread.
++    enum class Bloom : uint32_t {
++        Off = 0,
++        Low = 1,
++        High = 2,
++    };
++
++    void setBloom(Bloom bloom);
++    Bloom getBloom();
+ };
+diff --git a/src/render/rt64_shader_library.cpp b/src/render/rt64_shader_library.cpp
+--- a/src/render/rt64_shader_library.cpp
++++ b/src/render/rt64_shader_library.cpp
+@@ -5,6 +5,7 @@
+ #include "rt64_shader_library.h"
+ 
+ #include "common/rt64_common.h"
++#include "shared/rt64_bloom.h"
+ #include "shared/rt64_render_target_copy.h"
+ #include "shared/rt64_rsp_vertex_test_z.h"
+ 
+@@ -19,6 +20,7 @@
+ #include "shaders/FbWriteDepthCSMS.hlsl.spirv.h"
+ #include "shaders/GaussianFilterRGB3x3CS.hlsl.spirv.h"
+ #include "shaders/BoxFilterCS.hlsl.spirv.h"
++#include "shaders/BloomCS.hlsl.spirv.h"
+ #include "shaders/BicubicScalingCS.hlsl.spirv.h"
+ #include "shaders/HistogramAverageCS.hlsl.spirv.h"
+ #include "shaders/HistogramClearCS.hlsl.spirv.h"
+@@ -65,6 +67,7 @@
+ #   include "shaders/FbWriteDepthCSMS.hlsl.dxil.h"
+ #   include "shaders/GaussianFilterRGB3x3CS.hlsl.dxil.h"
+ #   include "shaders/BoxFilterCS.hlsl.dxil.h"
++#   include "shaders/BloomCS.hlsl.dxil.h"
+ #   include "shaders/BicubicScalingCS.hlsl.dxil.h"
+ #   include "shaders/HistogramAverageCS.hlsl.dxil.h"
+ #   include "shaders/HistogramClearCS.hlsl.dxil.h"
+@@ -110,6 +113,7 @@
+ #   include "shaders/FbWriteDepthCSMS.hlsl.metal.h"
+ #   include "shaders/GaussianFilterRGB3x3CS.hlsl.metal.h"
+ #   include "shaders/BoxFilterCS.hlsl.metal.h"
++#   include "shaders/BloomCS.hlsl.metal.h"
+ #   include "shaders/BicubicScalingCS.hlsl.metal.h"
+ #   include "shaders/HistogramAverageCS.hlsl.metal.h"
+ #   include "shaders/HistogramClearCS.hlsl.metal.h"
+@@ -282,6 +286,20 @@
+             boxFilter.pipeline = device->createComputePipeline(pipelineDesc);
+         }
+ 
++        // Bloom (the same bindings as the box filter).
++        {
++            BoxFilterDescriptorSet descriptorSet;
++            layoutBuilder.begin();
++            layoutBuilder.addPushConstant(0, 0, sizeof(interop::BloomCB), RenderShaderStageFlag::COMPUTE);
++            layoutBuilder.addDescriptorSet(descriptorSet);
++            layoutBuilder.end();
++            bloom.pipelineLayout = layoutBuilder.create(device);
++
++            std::unique_ptr<RenderShader> computeShader = device->createShader(CREATE_SHADER_INPUTS(BloomCSBlobDXIL, BloomCSBlobSPIRV, BloomCSBlobMSL, "CSMain", shaderFormat));
++            RenderComputePipelineDesc pipelineDesc(bloom.pipelineLayout.get(), computeShader.get(), 8, 8, 1);
++            bloom.pipeline = device->createComputePipeline(pipelineDesc);
++        }
++
+         // Raytracing compose.
+         {
+             RaytracingComposeDescriptorSet descriptorSet(samplerLibrary);
+@@ -588,8 +606,8 @@
+             std::unique_ptr<RenderShader> regularShader = device->createShader(CREATE_SHADER_INPUTS(VideoInterfacePSRegularBlobDXIL, VideoInterfacePSRegularBlobSPIRV, VideoInterfacePSRegularBlobMSL, "PSMain", shaderFormat));
+             std::unique_ptr<RenderShader> pixelShader = device->createShader(CREATE_SHADER_INPUTS(VideoInterfacePSPixelBlobDXIL, VideoInterfacePSPixelBlobSPIRV, VideoInterfacePSPixelBlobMSL, "PSMain", shaderFormat));
+ 
+-            VideoInterfaceDescriptorSet nearestDescriptorSet(samplerLibrary.nearest.borderBorder.get());
+-            VideoInterfaceDescriptorSet linearDescriptorSet(samplerLibrary.linear.borderBorder.get());
++            VideoInterfaceDescriptorSet nearestDescriptorSet(samplerLibrary.nearest.borderBorder.get(), samplerLibrary.linear.clampClamp.get());
++            VideoInterfaceDescriptorSet linearDescriptorSet(samplerLibrary.linear.borderBorder.get(), samplerLibrary.linear.clampClamp.get());
+             layoutBuilder.begin();
+             layoutBuilder.addPushConstant(0, 0, sizeof(interop::VideoInterfaceCB), RenderShaderStageFlag::PIXEL);
+             layoutBuilder.addDescriptorSet(nearestDescriptorSet);
+diff --git a/src/render/rt64_shader_library.h b/src/render/rt64_shader_library.h
+--- a/src/render/rt64_shader_library.h
++++ b/src/render/rt64_shader_library.h
+@@ -19,6 +19,7 @@
+ 
+         // All shaders.
+         ShaderRecord bicubicScaling;
++        ShaderRecord bloom;
+         ShaderRecord boxFilter;
+         ShaderRecord compose;
+         ShaderRecord debug;
+diff --git a/src/render/rt64_vi_renderer.cpp b/src/render/rt64_vi_renderer.cpp
+--- a/src/render/rt64_vi_renderer.cpp
++++ b/src/render/rt64_vi_renderer.cpp
+@@ -5,8 +5,11 @@
+ #include "rt64_vi_renderer.h"
+ #include "rt64_screen_filter.h"
+ 
++#include <algorithm>
+ #include <atomic>
++#include <iterator>
+ 
++#include "shared/rt64_bloom.h"
+ #include "shared/rt64_hlsl.h"
+ #include "shared/rt64_video_interface.h"
+ 
+@@ -23,6 +26,34 @@
+         return ScreenFilter(screenFilter.load(std::memory_order_relaxed));
+     }
+ 
++    // Bloom
++
++    static std::atomic<uint32_t> bloomSetting{ uint32_t(Bloom::Off) };
++
++    void setBloom(Bloom bloom) {
++        bloomSetting.store(uint32_t(bloom), std::memory_order_relaxed);
++    }
++
++    Bloom getBloom() {
++        return Bloom(bloomSetting.load(std::memory_order_relaxed));
++    }
++
++    // The first level's height: the N64's lines, whatever the resolution.
++    static const uint32_t BloomHeight = 240;
++
++    // How much of the glow is added, by setting.
++    static float bloomStrengthFor(Bloom bloom) {
++        switch (bloom) {
++        case Bloom::Low:
++            return 0.6f;
++        case Bloom::High:
++            return 1.2f;
++        case Bloom::Off:
++        default:
++            return 0.0f;
++        }
++    }
++
+     // VIRenderer
+ 
+     VIRenderer::VIRenderer() { }
+@@ -56,7 +87,104 @@
+         return windowCenter + relativeCoordinate * relativeScale;
+     }
+ 
++    void VIRenderer::prepareBloom(const RenderParams &p) {
++        assert(p.commandList != nullptr);
++
++        RenderCommandList *commandList = p.commandList;
++        const hlslpp::float2 videoSize = computeHDSize(hlslpp::float2(p.vi->fbSize()), p.resolutionScale, p.downsamplingScale);
++        const uint32_t videoWidth = std::min(std::max(uint32_t(videoSize.x), 1U), p.textureWidth);
++        const uint32_t videoHeight = std::min(std::max(uint32_t(videoSize.y), 1U), p.textureHeight);
++        bloomStrength = bloomStrengthFor(getBloom());
++
++        // The levels' sizes: the picture's shape, 240 and 120 lines (1 x 1 while
++        // off, only so the VI pass has something bound).
++        uint32_t widths[2] = { 1, 1 };
++        uint32_t heights[2] = { 1, 1 };
++        if (bloomStrength > 0.0f) {
++            heights[0] = std::min(BloomHeight, videoHeight);
++            widths[0] = std::max(uint32_t(float(heights[0]) * float(videoWidth) / float(videoHeight) + 0.5f), 1U);
++            heights[1] = std::max(heights[0] / 2, 1U);
++            widths[1] = std::max(widths[0] / 2, 1U);
++        }
++
++        for (uint32_t i = 0; i < 2; i++) {
++            BloomLevel &level = bloomLevels[i];
++            if ((level.texture == nullptr) || (level.width != widths[i]) || (level.height != heights[i])) {
++                const RenderTextureDesc desc = RenderTextureDesc::Texture2D(widths[i], heights[i], 1, RenderFormat::R16G16B16A16_FLOAT, RenderTextureFlag::STORAGE | RenderTextureFlag::UNORDERED_ACCESS);
++                level.texture = p.device->createTexture(desc);
++                level.texture->setName("VI Bloom");
++                level.temp = p.device->createTexture(desc);
++                level.temp->setName("VI Bloom Temp");
++                level.width = widths[i];
++                level.height = heights[i];
++            }
++        }
++
++        if (bloomStrength > 0.0f) {
++            for (auto &set : bloomDescriptorSets) {
++                if (set == nullptr) {
++                    set = std::make_unique<BoxFilterDescriptorSet>(p.device);
++                }
++            }
++
++            struct Pass {
++                RenderTexture *input;
++                uint32_t inputWidth;
++                uint32_t inputHeight;
++                RenderTexture *output;
++                uint32_t outputWidth;
++                uint32_t outputHeight;
++                uint32_t mode;
++            };
++
++            BloomLevel &level0 = bloomLevels[0];
++            BloomLevel &level1 = bloomLevels[1];
++            const Pass passes[6] = {
++                { p.texture, videoWidth, videoHeight, level0.texture.get(), level0.width, level0.height, BLOOM_MODE_EXTRACT },
++                { level0.texture.get(), level0.width, level0.height, level0.temp.get(), level0.width, level0.height, BLOOM_MODE_BLUR_X },
++                { level0.temp.get(), level0.width, level0.height, level0.texture.get(), level0.width, level0.height, BLOOM_MODE_BLUR_Y },
++                { level0.texture.get(), level0.width, level0.height, level1.texture.get(), level1.width, level1.height, BLOOM_MODE_DOWNSAMPLE },
++                { level1.texture.get(), level1.width, level1.height, level1.temp.get(), level1.width, level1.height, BLOOM_MODE_BLUR_X },
++                { level1.temp.get(), level1.width, level1.height, level1.texture.get(), level1.width, level1.height, BLOOM_MODE_BLUR_Y },
++            };
++
++            commandList->setPipeline(p.shaderLibrary->bloom.pipeline.get());
++            commandList->setComputePipelineLayout(p.shaderLibrary->bloom.pipelineLayout.get());
++            for (uint32_t i = 0; i < 6; i++) {
++                const Pass &pass = passes[i];
++                BoxFilterDescriptorSet &set = *bloomDescriptorSets[i];
++                set.setTexture(set.gInput, pass.input, RenderTextureLayout::SHADER_READ);
++                set.setTexture(set.gOutput, pass.output, RenderTextureLayout::GENERAL);
++
++                RenderTextureBarrier barriers[] = {
++                    RenderTextureBarrier(pass.input, RenderTextureLayout::SHADER_READ),
++                    RenderTextureBarrier(pass.output, RenderTextureLayout::GENERAL)
++                };
++
++                commandList->barriers(RenderBarrierStage::COMPUTE, barriers, uint32_t(std::size(barriers)));
++
++                interop::BloomCB bloomCB;
++                bloomCB.InputSize = { int32_t(pass.inputWidth), int32_t(pass.inputHeight) };
++                bloomCB.OutputSize = { int32_t(pass.outputWidth), int32_t(pass.outputHeight) };
++                bloomCB.Mode = pass.mode;
++                commandList->setComputePushConstants(0, &bloomCB);
++                commandList->setComputeDescriptorSet(set.get(), 0);
++
++                const uint32_t BlockSize = 8;
++                commandList->dispatch((pass.outputWidth + BlockSize - 1) / BlockSize, (pass.outputHeight + BlockSize - 1) / BlockSize, 1);
++            }
++        }
++
++        RenderTextureBarrier readBarriers[] = {
++            RenderTextureBarrier(bloomLevels[0].texture.get(), RenderTextureLayout::SHADER_READ),
++            RenderTextureBarrier(bloomLevels[1].texture.get(), RenderTextureLayout::SHADER_READ)
++        };
++
++        commandList->barriers(RenderBarrierStage::GRAPHICS, readBarriers, uint32_t(std::size(readBarriers)));
++    }
++
+     void VIRenderer::render(const RenderParams &p) {
++
+         const ShaderRecord *shader = nullptr;
+         const RenderSampler *sampler = nullptr;
+         switch (p.filtering) {
+@@ -76,11 +204,13 @@
+         }
+ 
+         if ((descriptorSet == nullptr) || (descriptorSetSampler != sampler)) {
+-            descriptorSet = std::make_unique<VideoInterfaceDescriptorSet>(sampler, p.device);
++            descriptorSet = std::make_unique<VideoInterfaceDescriptorSet>(sampler, p.shaderLibrary->samplerLibrary.linear.clampClamp.get(), p.device);
+             descriptorSetSampler = sampler;
+         }
+ 
+         descriptorSet->setTexture(descriptorSet->gInput, p.texture, RenderTextureLayout::SHADER_READ);
++        descriptorSet->setTexture(descriptorSet->gBloomSmall, bloomLevels[0].texture.get(), RenderTextureLayout::SHADER_READ);
++        descriptorSet->setTexture(descriptorSet->gBloomLarge, bloomLevels[1].texture.get(), RenderTextureLayout::SHADER_READ);
+ 
+         RenderViewport viewport;
+         RenderRect scissor;
+@@ -104,6 +234,7 @@
+         }
+ 
+         pushConstants.sourceResolution = { sourceWidth, sourceHeight };
++        pushConstants.bloomStrength = bloomStrength;
+ 
+         p.commandList->setPipeline(shader->pipeline.get());
+         p.commandList->setGraphicsPipelineLayout(shader->pipelineLayout.get());
+diff --git a/src/render/rt64_vi_renderer.h b/src/render/rt64_vi_renderer.h
+--- a/src/render/rt64_vi_renderer.h
++++ b/src/render/rt64_vi_renderer.h
+@@ -15,6 +15,19 @@
+         std::unique_ptr<VideoInterfaceDescriptorSet> descriptorSet;
+         const RenderSampler *descriptorSetSampler = nullptr;
+ 
++        // Bloom's two levels (the picture's glowing parts at 240 lines, then
++        // 120), each blurred through a second texture.
++        struct BloomLevel {
++            std::unique_ptr<RenderTexture> texture;
++            std::unique_ptr<RenderTexture> temp;
++            uint32_t width = 0;
++            uint32_t height = 0;
++        };
++
++        BloomLevel bloomLevels[2];
++        std::unique_ptr<BoxFilterDescriptorSet> bloomDescriptorSets[6];
++        float bloomStrength = 0.0f;
++
+         struct RenderParams {
+             RenderDevice *device = nullptr;
+             RenderCommandList *commandList = nullptr;
+@@ -33,6 +46,8 @@
+ 
+         VIRenderer();
+         ~VIRenderer();
++        // Before the swap chain's framebuffer is set: the bloom passes.
++        void prepareBloom(const RenderParams &p);
+         void render(const RenderParams &p);
+         static void getViewportAndScissor(const RenderSwapChain *swapChain, const VI &vi, hlslpp::float2 resolutionScale, uint32_t downsamplingScale, bool removeBlackBorders, RenderViewport &viewport, RenderRect &scissor);
+     };
+diff --git a/src/shaders/VideoInterfacePS.hlsl b/src/shaders/VideoInterfacePS.hlsl
+--- a/src/shaders/VideoInterfacePS.hlsl
++++ b/src/shaders/VideoInterfacePS.hlsl
+@@ -2,11 +2,15 @@
+ // RT64
+ //
+ 
++#include "shared/rt64_bloom.h"
+ #include "shared/rt64_video_interface.h"
+ 
+ [[vk::push_constant]] ConstantBuffer<VideoInterfaceCB> gConstants : register(b0);
+ Texture2D<float4> gInput : register(t1);
+ SamplerState gSampler : register(s2);
++Texture2D<float4> gBloomSmall : register(t3);
++Texture2D<float4> gBloomLarge : register(t4);
++SamplerState gBloomSampler : register(s5);
+ 
+ // Limit texture sampling to the area the VI can sample of the texture.
+ 
+@@ -158,9 +162,9 @@
+     return float4(color, 1.0f);
+ }
+ 
+-float4 PSMain(in float4 pos : SV_Position, in float2 uv : TEXCOORD0) : SV_TARGET {
++float4 PictureColor(float2 uv, float2 screenPos) {
+     if (gConstants.screenFilter != 0) {
+-        return ApplyScreenFilter(uv, pos.xy);
++        return ApplyScreenFilter(uv, screenPos);
+     }
+ 
+ #ifdef PIXEL_ANTIALIASING
+@@ -168,4 +172,24 @@
+ #else
+     return SampleInput((uv / gConstants.textureResolution) * gConstants.videoResolution);
+ #endif
++}
++
++// Bloom (gConstants.bloomStrength, RT64::Bloom): the blurred glowing parts
++// (shaders/BloomCS.hlsl, which cover the picture as uv does) added on top. What
++// glows here itself is taken off first, so the glow spreads around a bright
++// thing more than over it: a wide patch of lava gets a little brighter inside
++// and a glow at its edges instead of a wash of light over all of it.
++static const float BloomInside = 0.8f;
++static const float BloomMax = 0.6f;
++
++float4 PSMain(in float4 pos : SV_Position, in float2 uv : TEXCOORD0) : SV_TARGET {
++    float4 color = PictureColor(uv, pos.xy);
++    if ((gConstants.bloomStrength > 0.0f) && all(uv >= 0.0f) && all(uv <= 1.0f)) {
++        float3 glow = (gBloomSmall.SampleLevel(gBloomSampler, uv, 0).rgb + gBloomLarge.SampleLevel(gBloomSampler, uv, 0).rgb) * 0.5f;
++        float3 here = BloomKey(SampleInput((uv / gConstants.textureResolution) * gConstants.videoResolution).rgb);
++        float3 added = min(max(glow - here * BloomInside, 0.0f) * gConstants.bloomStrength, BloomMax);
++        color.rgb = 1.0f - (1.0f - saturate(color.rgb)) * (1.0f - added);
++    }
++
++    return color;
+ }
+\ No newline at end of file
+diff --git a/src/shared/rt64_video_interface.h b/src/shared/rt64_video_interface.h
+--- a/src/shared/rt64_video_interface.h
++++ b/src/shared/rt64_video_interface.h
+@@ -15,6 +15,7 @@
+         float gamma;
+         uint screenFilter; // RT64::ScreenFilter (render/rt64_screen_filter.h)
+         float2 sourceResolution; // the frame buffer size in N64 pixels
++        float bloomStrength; // 0 for none (RT64::Bloom)
+     };
+ #ifdef HLSL_CPU
+ };
+diff --git a/src/shaders/BloomCS.hlsl b/src/shaders/BloomCS.hlsl
+new file mode 100644
+--- /dev/null
++++ b/src/shaders/BloomCS.hlsl
+@@ -0,0 +1,91 @@
++//
++// RT64
++//
++
++#include "shared/rt64_bloom.h"
++
++#define BLOCK_SIZE 8
++
++[[vk::push_constant]] ConstantBuffer<BloomCB> gConstants : register(b0);
++Texture2D<float4> gInput : register(t1);
++RWTexture2D<float4> gOutput : register(u2);
++
++// Bloom (render/rt64_screen_filter.h): a glow around the brightest strongly
++// coloured parts of the picture (lava, neon, energy shots, fire). The N64's
++// picture has no light values past white, so what glows is picked by colour:
++// bright and saturated. White and grey (text, pale walls, sky) don't glow.
++//
++// The passes, at a fixed size whatever the resolution so the glow looks the
++// same at any scale:
++//   BLOOM_MODE_EXTRACT     the picture's glowing parts, shrunk to the first level
++//   BLOOM_MODE_DOWNSAMPLE  a level halved (2 x 2 average)
++//   BLOOM_MODE_BLUR_X / _Y a level blurred, one direction at a time
++
++int2 ClampCoord(int2 coord) {
++    return clamp(coord, int2(0, 0), gConstants.InputSize - int2(1, 1));
++}
++
++float4 LoadInput(int2 coord) {
++    return gInput.Load(int3(ClampCoord(coord), 0));
++}
++
++float3 Extract(float2 outCoord) {
++    // A grid of up to 6 x 6 samples over the input pixels this texel covers,
++    // each weighed on its own, so a bright line isn't averaged away with its
++    // dark surroundings before it's judged.
++    const float2 scale = float2(gConstants.InputSize) / float2(gConstants.OutputSize);
++    const int2 count = clamp(int2(ceil(scale)), int2(1, 1), int2(6, 6));
++    float3 sum = 0.0f;
++    for (int y = 0; y < count.y; y++) {
++        for (int x = 0; x < count.x; x++) {
++            float2 inPos = (outCoord + (float2(x, y) + 0.5f) / float2(count)) * scale;
++            sum += BloomKey(LoadInput(int2(inPos)).rgb);
++        }
++    }
++
++    return sum / float(count.x * count.y);
++}
++
++float3 Downsample(int2 outCoord) {
++    int2 inCoord = outCoord * 2;
++    return (LoadInput(inCoord).rgb + LoadInput(inCoord + int2(1, 0)).rgb +
++        LoadInput(inCoord + int2(0, 1)).rgb + LoadInput(inCoord + int2(1, 1)).rgb) * 0.25f;
++}
++
++float3 Blur(int2 outCoord, int2 direction) {
++    // Gaussian, sigma 3 texels, 13 taps.
++    const float Sigma = 3.0f;
++    float3 sum = 0.0f;
++    float weightSum = 0.0f;
++    [unroll]
++    for (int i = -6; i <= 6; i++) {
++        float weight = exp(-float(i * i) / (2.0f * Sigma * Sigma));
++        sum += LoadInput(outCoord + direction * i).rgb * weight;
++        weightSum += weight;
++    }
++
++    return sum / weightSum;
++}
++
++[numthreads(BLOCK_SIZE, BLOCK_SIZE, 1)]
++void CSMain(uint2 coord : SV_DispatchThreadID) {
++    if (any(coord >= uint2(gConstants.OutputSize))) {
++        return;
++    }
++
++    float3 color;
++    if (gConstants.Mode == BLOOM_MODE_EXTRACT) {
++        color = Extract(float2(coord));
++    }
++    else if (gConstants.Mode == BLOOM_MODE_DOWNSAMPLE) {
++        color = Downsample(int2(coord));
++    }
++    else if (gConstants.Mode == BLOOM_MODE_BLUR_X) {
++        color = Blur(int2(coord), int2(1, 0));
++    }
++    else {
++        color = Blur(int2(coord), int2(0, 1));
++    }
++
++    gOutput[coord] = float4(color, 1.0f);
++}
+diff --git a/src/shared/rt64_bloom.h b/src/shared/rt64_bloom.h
+new file mode 100644
+--- /dev/null
++++ b/src/shared/rt64_bloom.h
+@@ -0,0 +1,44 @@
++//
++// RT64
++//
++
++#pragma once
++
++#include "shared/rt64_hlsl.h"
++
++#define BLOOM_MODE_EXTRACT 0
++#define BLOOM_MODE_DOWNSAMPLE 1
++#define BLOOM_MODE_BLUR_X 2
++#define BLOOM_MODE_BLUR_Y 3
++
++#ifdef HLSL_CPU
++namespace interop {
++#endif
++    struct BloomCB {
++        int2 InputSize;
++        int2 OutputSize;
++        uint Mode;
++    };
++#ifdef HLSL_CPU
++};
++#else
++// How much of a colour glows (shaders/BloomCS.hlsl, shaders/VideoInterfacePS.hlsl):
++// only the most saturated colours, with some brightness: fire, explosions,
++// energy shots and lights are 0.9 and more saturated, the ground and
++// buildings less, white and grey near 0. The glow takes the colour's hue at
++// full brightness, so a dim light still glows. The HUD's colours don't glow,
++// as it's drawn into the same picture: pure green (radar, text, weapon panel,
++// markers) and its sky blue (0, 186, 255: counters and gauges).
++float3 BloomKey(float3 c) {
++    float hi = max(c.r, max(c.g, c.b));
++    float lo = min(c.r, min(c.g, c.b));
++    float saturation = (hi - lo) / max(hi, 1e-3f);
++    float weight = smoothstep(0.84f, 0.94f, saturation) * smoothstep(0.20f, 0.50f, hi);
++    float other = max(c.r, c.b) / max(c.g, 1e-3f);
++    float green = (c.g >= hi) ? 1.0f - smoothstep(0.35f, 0.60f, other) : 0.0f;
++    float gb = c.g / max(c.b, 1e-3f);
++    float sky = (c.b >= hi) ? smoothstep(0.55f, 0.65f, gb) * (1.0f - smoothstep(0.82f, 0.92f, gb)) *
++        (1.0f - smoothstep(0.20f, 0.40f, c.r / max(c.b, 1e-3f))) : 0.0f;
++    return (c / max(hi, 1e-3f)) * weight * (1.0f - max(green, sky));
++}
++#endif

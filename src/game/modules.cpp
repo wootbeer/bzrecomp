@@ -118,3 +118,9 @@ extern "C" void bz_on_rom_read(uint8_t* rdram, int32_t dst, uint32_t pi_addr, ui
         return;
     }
 }
+
+// Which module is in the module slot (-1 before the first), for code that
+// writes the in-game module's memory (src/game/cheats.cpp).
+extern "C" int bz_loaded_module() {
+    return loaded_module;
+}

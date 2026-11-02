@@ -1,5 +1,5 @@
 // Game-specific options on the General tab (which pak each controller holds,
-// and local multiplayer) and the Graphics tab (Screen Filter). See
+// and local multiplayer) and the Graphics tab (Screen Filter, Bloom). See
 // include/bz_config.h.
 #include "bz_config.h"
 
@@ -24,6 +24,13 @@ namespace {
         {bz::config::ScreenFilter::CRT, "CRT", "CRT"},
         {bz::config::ScreenFilter::Scanlines, "Scanlines", "Scanlines"},
         {bz::config::ScreenFilter::LCD, "LCD", "LCD"},
+    };
+
+    const std::string bloom_id = "bloom";
+    const std::vector<recomp::config::ConfigOptionEnumOption> bloom_options = {
+        {bz::config::Bloom::Off, "Off", "Off"},
+        {bz::config::Bloom::Low, "Low", "Low"},
+        {bz::config::Bloom::High, "High", "High"},
     };
 
     // Looked up by id on each read: the Config& create_general_tab() returns
@@ -98,6 +105,15 @@ void bz::config::add_graphics_options(recomp::config::Config& graphics) {
         ScreenFilter::None
     );
 
+    graphics.add_enum_option(
+        bloom_id,
+        "Bloom",
+        "A glow around bright, strongly coloured parts of the picture, like fire, explosions and energy shots. "
+        "The green HUD doesn't glow.",
+        bloom_options,
+        Bloom::Off
+    );
+
 }
 
 bz::config::ScreenFilter bz::config::get_screen_filter() {
@@ -107,3 +123,9 @@ bz::config::ScreenFilter bz::config::get_screen_filter() {
     return static_cast<ScreenFilter>(std::get<uint32_t>(recompui::config::get_graphics_config().get_option_value(screen_filter_id)));
 }
 
+bz::config::Bloom bz::config::get_bloom() {
+    if (!graphics_options_added) {
+        return Bloom::Off;
+    }
+    return static_cast<Bloom>(std::get<uint32_t>(recompui::config::get_graphics_config().get_option_value(bloom_id)));
+}

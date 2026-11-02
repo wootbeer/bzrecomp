@@ -49,6 +49,7 @@
 #include "librecomp/game.hpp"
 #include "librecomp/helpers.hpp"
 
+#include "bz_cheats.h"
 #include "bz_config.h"
 #include "bz_widescreen.h"
 
@@ -204,6 +205,7 @@ static void update_gfx(void*) {
     bz::set_widescreen_scale(widescreen_scale);
 
     RT64::setScreenFilter(static_cast<RT64::ScreenFilter>(bz::config::get_screen_filter()));
+    RT64::setBloom(static_cast<RT64::Bloom>(bz::config::get_bloom()));
 }
 
 // --- Audio ----------------------------------------------------------------
@@ -483,6 +485,7 @@ int main(int argc, char** argv) {
     recompui::config::create_controls_tab();
     recompui::config::create_sound_tab();
     recompui::config::create_mods_tab();
+    bz::cheats::add_cheats_tabs();
     recompui::config::finalize();
 
     // Read from the just-loaded config; takes effect on the next launch if
