@@ -126,6 +126,29 @@ leave the game's own behaviour, look and balance alone.
   0005): CRT from Timothy Lottes' CRT shader, LCD from LCD3x, both public
   domain, in RT64's video pass and lined up with the N64's lines at any
   resolution. Set each frame from the option (`src/main/main.cpp`).
+- **Bloom** (Graphics tab, `lib-patches/rt64/0011`, from the Sin and
+  Punishment and BattleTanx ports): a glow around bright, strongly coloured
+  parts of the final picture. The HUD is drawn into the same picture, so its
+  colours (pure green, and its sky blue) are kept from glowing.
+- **Texture Filtering, HUD Filtering, Menus Only** (Graphics tab, from the
+  Sin and Punishment port). Sharp draws the world's textures, or the HUD,
+  text and menus, with point sampling: each graphics task's display lists
+  are walked before osSpTaskLoad and the texture filter commands set to
+  point (`src/game/texture_filter.cpp`); a command belongs to the HUD if a
+  rectangle is the first thing drawn after it. Menus Only shows the screen
+  filter only while the menu module is loaded.
+- **Cheats and Hacks tabs** (`src/game/cheats.cpp`). The game's own codes
+  are button combinations entered in the menus, checked against a table at
+  0x8012D000 that gives each a flag byte (0x8006A1C0-C6, 0x8006A1F5); the
+  flags' readers show what each does (free buildings, infinite armor and
+  ammo, free satellite, reveal all units, game speed 1.5x and 2x, level
+  select). The toggles keep a flag set. GameShark codes are written on each
+  pass of the controller thread; the in-game module's addresses only while
+  it's loaded, since the menu module loads into the same memory.
+- **Lib-patches as a set** (`cmake/ApplyLibPatches.cmake`). Patches can
+  build on each other, so a stamp records which are applied (by content) and
+  a fingerprint of the patched tree; when either changes, the submodule is
+  reset and all of its patches are applied again.
 - **Ground at higher refresh rates.** The main ground builder's grid is now
   built around a fixed anchor instead of the camera (`bz_terrain_begin_anchored`
   in `src/game/terrain_precision.cpp`), so a grid point keeps the same vertex

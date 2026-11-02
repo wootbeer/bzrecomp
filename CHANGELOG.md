@@ -1,5 +1,16 @@
 # Changelog  
   
+## [0.1.1 Beta]  
+  
+### Added  
+- Bloom option, the green HUD doesn't glow  
+- Texture Filtering and HUD Filtering options: Sharp draws them with sharp pixels  
+- Menus Only option for the screen filter  
+- Cheats tab with the game's own codes as toggles  
+- Hacks tab with GameShark codes  
+### Changed  
+- crash_log.txt now names the cause of more crashes  
+  
 ## [0.1.0 Beta] - 2026-10-14  
   
 ### Changed  
