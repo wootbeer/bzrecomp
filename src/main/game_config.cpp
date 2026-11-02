@@ -26,6 +26,13 @@ namespace {
         {bz::config::ScreenFilter::LCD, "LCD", "LCD"},
     };
 
+    const std::string screen_filter_menus_id = "screen_filter_menus_only";
+    const std::string texture_filter_id = "texture_filter";
+    const std::string hud_filter_id = "hud_filter";
+    const std::vector<recomp::config::ConfigOptionEnumOption> texture_filter_options = {
+        {0u, "Smooth", "Smooth"},
+        {1u, "Sharp", "Sharp"},
+    };
     const std::string bloom_id = "bloom";
     const std::vector<recomp::config::ConfigOptionEnumOption> bloom_options = {
         {bz::config::Bloom::Off, "Off", "Off"},
@@ -104,6 +111,13 @@ void bz::config::add_graphics_options(recomp::config::Config& graphics) {
         screen_filter_options,
         ScreenFilter::None
     );
+    graphics.add_bool_option(
+        screen_filter_menus_id,
+        "Menus Only",
+        "The screen filter in the menus only, not in play.",
+        false
+    );
+    graphics.add_option_disable_dependency(screen_filter_menus_id, screen_filter_id, ScreenFilter::None);
 
     graphics.add_enum_option(
         bloom_id,
@@ -112,6 +126,21 @@ void bz::config::add_graphics_options(recomp::config::Config& graphics) {
         "The green HUD doesn't glow.",
         bloom_options,
         Bloom::Off
+    );
+
+    graphics.add_enum_option(
+        texture_filter_id,
+        "Texture Filtering",
+        "The game's world: Smooth is the game's own filtering, Sharp draws its textures with sharp pixels.",
+        texture_filter_options,
+        0u
+    );
+    graphics.add_enum_option(
+        hud_filter_id,
+        "HUD Filtering",
+        "The HUD, text and menus: Smooth is the game's own filtering, Sharp draws them with sharp pixels.",
+        texture_filter_options,
+        0u
     );
 
 }
@@ -128,4 +157,25 @@ bz::config::Bloom bz::config::get_bloom() {
         return Bloom::Off;
     }
     return static_cast<Bloom>(std::get<uint32_t>(recompui::config::get_graphics_config().get_option_value(bloom_id)));
+}
+
+bool bz::config::get_screen_filter_menus_only() {
+    if (!graphics_options_added) {
+        return false;
+    }
+    return std::get<bool>(recompui::config::get_graphics_config().get_option_value(screen_filter_menus_id));
+}
+
+bool bz::config::get_sharp_textures() {
+    if (!graphics_options_added) {
+        return false;
+    }
+    return std::get<uint32_t>(recompui::config::get_graphics_config().get_option_value(texture_filter_id)) == 1;
+}
+
+bool bz::config::get_sharp_hud() {
+    if (!graphics_options_added) {
+        return false;
+    }
+    return std::get<uint32_t>(recompui::config::get_graphics_config().get_option_value(hud_filter_id)) == 1;
 }

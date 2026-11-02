@@ -181,6 +181,10 @@ static ultramodern::renderer::WindowHandle create_window(ultramodern::gfx_callba
 #endif
 }
 
+// src/game/modules.cpp and src/game/texture_filter.cpp.
+extern "C" int bz_loaded_module();
+namespace bz { void set_texture_filters(bool sharp_world, bool sharp_hud); }
+
 static void update_gfx(void*) {
     // poll_inputs() only reads already-buffered SDL state (SDL_GetKeyboardState,
     // etc.) -- it never calls SDL_PollEvent, so it never pumps the window's
@@ -204,7 +208,10 @@ static void update_gfx(void*) {
     }
     bz::set_widescreen_scale(widescreen_scale);
 
-    RT64::setScreenFilter(static_cast<RT64::ScreenFilter>(bz::config::get_screen_filter()));
+    // Menus Only: the filter while the menu module (0) is loaded, not in play.
+    const bool filter_off = bz::config::get_screen_filter_menus_only() && bz_loaded_module() != 0;
+    RT64::setScreenFilter(filter_off ? RT64::ScreenFilter::None : static_cast<RT64::ScreenFilter>(bz::config::get_screen_filter()));
+    bz::set_texture_filters(bz::config::get_sharp_textures(), bz::config::get_sharp_hud());
     RT64::setBloom(static_cast<RT64::Bloom>(bz::config::get_bloom()));
 }
 

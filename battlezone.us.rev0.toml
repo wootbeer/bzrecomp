@@ -403,6 +403,23 @@ func = "ovl1_func_8012F2C0"
 before_vram = 0x8012f4f8
 text = "    bz_cull_half_width(&ctx->f3.fl);"
 
+# Texture Filtering and HUD Filtering (src/game/texture_filter.cpp): each
+# graphics task's display lists, before osSpTaskLoad.
+[[patches.hook]]  # jal osSpTaskLoad, the task in $a0
+func = "func_8002A818"
+before_vram = 0x8002a89c
+text = "    bz_texture_filter_task(rdram, (int32_t)ctx->r4);"
+
+[[patches.hook]]  # jal osSpTaskLoad, the task in $s0 (copied to $a0 in the delay slot)
+func = "func_8002A818"
+before_vram = 0x8002a8ec
+text = "    bz_texture_filter_task(rdram, (int32_t)ctx->r16);"
+
+[[patches.hook]]  # jal osSpTaskLoad, the task in $a0
+func = "func_8002A934"
+before_vram = 0x8002a9c8
+text = "    bz_texture_filter_task(rdram, (int32_t)ctx->r4);"
+
 # Cheats and Hacks tabs (src/game/cheats.cpp), applied on each pass of the
 # controller thread, after its osContGetReadData.
 [[patches.hook]]

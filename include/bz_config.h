@@ -39,7 +39,12 @@ namespace bz::config {
     // recompui::config::create_graphics_tab() and recompui::config::finalize().
     void add_graphics_options(recomp::config::Config& graphics);
     ScreenFilter get_screen_filter();
+    bool get_screen_filter_menus_only();
     Bloom get_bloom();
+    // Texture Filtering (the world) and HUD Filtering: Sharp draws them with
+    // point sampling (src/game/texture_filter.cpp).
+    bool get_sharp_textures();
+    bool get_sharp_hud();
 
     Accessory get_accessory(int port);
     bool get_local_multiplayer();

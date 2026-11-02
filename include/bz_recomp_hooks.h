@@ -57,6 +57,9 @@ void bz_cull_half_width(float* half_width);
 
 // src/game/cheats.cpp: the Cheats and Hacks tabs, applied each controller read.
 void bz_cheats_frame(uint8_t* rdram);
+
+// src/game/texture_filter.cpp: Texture Filtering and HUD Filtering.
+void bz_texture_filter_task(uint8_t* rdram, int32_t task);
 void bz_cull_ground_footprint(uint8_t* rdram, int32_t camera, float* min_x, float* min_z,
                               float* max_x, float* max_z);
 
