@@ -1,0 +1,22 @@
+diff --git a/librecomp/src/overlays.cpp b/librecomp/src/overlays.cpp
+index 8c8e5d1..9ec5cfa 100644
+--- a/librecomp/src/overlays.cpp
++++ b/librecomp/src/overlays.cpp
+@@ -361,12 +361,15 @@ recomp_func_t* recomp::overlays::get_func_by_section_rom_function_vram(uint32_t
+     return get_func_by_section_index_function_offset(find_section_it->second, func_offset);
+ }
+ 
++// Reports a jump to an address with no recompiled function and ends the
++// process (defined by the game port).
++extern "C" [[noreturn]] void recomp_report_missing_function(int32_t addr);
++
+ extern "C" recomp_func_t * get_function(int32_t addr) {
+     auto func_find = func_map.find(addr);
+     if (func_find == func_map.end()) {
+         fprintf(stderr, "Failed to find function at 0x%08X\n", addr);
+-        assert(false);
+-        std::exit(EXIT_FAILURE);
++        recomp_report_missing_function(addr);
+     }
+     return func_find->second;
+ }

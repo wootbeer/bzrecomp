@@ -10,6 +10,7 @@
 #include <cinttypes>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <vector>
 
@@ -59,8 +60,11 @@ namespace {
             [](uintptr_t a, const GameFunc& f) { return a < f.host; });
         if (it == game_funcs.begin()) return nullptr;
         --it;
-        // Host code is much larger than MIPS code; allow 64x plus slack.
-        if (addr - it->host > (uintptr_t)it->rom_size * 64 + 0x10000) return nullptr;
+        // Host code is much larger than MIPS code; allow 64x plus slack. The
+        // runtime's own replacements for libultra functions have no MIPS size
+        // and are short: a wide window there names unrelated code after them.
+        const uintptr_t slack = it->rom_size == 0 ? 0x800 : 0x10000;
+        if (addr - it->host > (uintptr_t)it->rom_size * 64 + slack) return nullptr;
         return &*it;
     }
 
@@ -78,6 +82,21 @@ namespace {
     // be that -- exit quietly instead of reporting a crash.
     bool is_shutdown_fault(bool has_access, uintptr_t access) {
         return has_access && in_rdram(access) && (access - (uintptr_t)rdram_base) < 0x20000000ull;
+    }
+
+    void list_stack(FILE* out, const uintptr_t* stack, size_t stack_words) {
+        fprintf(out, "Game functions on the stack (most recent first, best effort):\n");
+        int listed = 0;
+        uint32_t last = 0;
+        for (size_t i = 0; i < stack_words && listed < 24; i++) {
+            const GameFunc* f = find_game_func(stack[i]);
+            if (f != nullptr && f->vram != last) {
+                fprintf(out, "  func_%08X\n", f->vram);
+                last = f->vram;
+                listed++;
+            }
+        }
+        fflush(out);
     }
 
     void report(FILE* out, const char* what, uintptr_t pc, uintptr_t module_base, bool has_access, uintptr_t access, bool write, const uintptr_t* stack, size_t stack_words) {
@@ -98,18 +117,7 @@ namespace {
                 fprintf(out, "%s host address 0x%" PRIxPTR " (outside N64 memory)\n", write ? "Writing" : "Reading", access);
             }
         }
-        fprintf(out, "Game functions on the stack (most recent first, best effort):\n");
-        int listed = 0;
-        uint32_t last = 0;
-        for (size_t i = 0; i < stack_words && listed < 24; i++) {
-            const GameFunc* f = find_game_func(stack[i]);
-            if (f != nullptr && f->vram != last) {
-                fprintf(out, "  func_%08X\n", f->vram);
-                last = f->vram;
-                listed++;
-            }
-        }
-        fflush(out);
+        list_stack(out, stack, stack_words);
     }
 
     // The top (highest address) of the current thread's stack, or 0 if unknown.
@@ -131,6 +139,20 @@ namespace {
 #endif
     }
 
+    FILE* open_log() {
+        FILE* f = fopen("crash_log.txt", "w");
+        if (f == nullptr && fallback_log_path[0] != '\0') {
+            f = fopen(fallback_log_path, "w");
+        }
+        return f;
+    }
+
+    // The words of the current thread's stack from `sp` up (at most 64 KB).
+    size_t stack_words_from(uintptr_t sp) {
+        uintptr_t top = stack_top();
+        return top > sp ? std::min<uintptr_t>(top - sp, 0x10000) / sizeof(uintptr_t) : 0;
+    }
+
     void write_reports(const char* what, uintptr_t pc, uintptr_t module_base, bool has_access, uintptr_t access, bool write, uintptr_t sp) {
         // Scan up to 64 KB of the faulting thread's stack (the handler runs on
         // that thread) for return addresses, never past its top.
@@ -141,10 +163,7 @@ namespace {
             words = std::min<uintptr_t>(top - sp, 0x10000) / sizeof(uintptr_t);
         }
         report(stderr, what, pc, module_base, has_access, access, write, stack, words);
-        FILE* f = fopen("crash_log.txt", "w");
-        if (f == nullptr && fallback_log_path[0] != '\0') {
-            f = fopen(fallback_log_path, "w");
-        }
+        FILE* f = open_log();
         if (f != nullptr) {
             report(f, what, pc, module_base, has_access, access, write, stack, words);
             fclose(f);
@@ -211,6 +230,37 @@ namespace {
 // from the game entry's on_init_callback in src/main/main.cpp).
 extern "C" void bz_crash_note_rdram(uint8_t* rdram) {
     rdram_base = rdram;
+}
+
+// The game jumped through a pointer to an address the runtime has no
+// recompiled function for (librecomp's get_function, lib-patches/
+// N64ModernRuntime/0002). Reported like a crash, then the process ends at
+// once: a normal exit would run static destructors while the other threads
+// still use them, and a crash there would hide this report.
+extern "C" [[noreturn]] void recomp_report_missing_function(int32_t addr) {
+    uintptr_t marker = 0;
+    const uintptr_t sp = (uintptr_t)&marker;
+    const uintptr_t* stack = reinterpret_cast<const uintptr_t*>(sp);
+    const size_t words = stack_words_from(sp);
+    for (FILE* out : { stderr, open_log() }) {
+        if (out == nullptr) {
+            continue;
+        }
+        fprintf(out, "Battlezone: Rise of the Black Dogs Recompiled crashed.\n");
+        fprintf(out, "The game called a function the port doesn't have: 0x%08X\n", (uint32_t)addr);
+        list_stack(out, stack, words);
+        if (out != stderr) {
+            fclose(out);
+        }
+    }
+#if defined(_WIN32)
+    MessageBoxA(nullptr,
+        "The game crashed. Details were saved to crash_log.txt in the game's folder -- "
+        "please include that file when reporting the problem.",
+        "Battlezone: Rise of the Black Dogs Recompiled", MB_OK | MB_ICONERROR);
+    TerminateProcess(GetCurrentProcess(), 1);
+#endif
+    _Exit(1);
 }
 
 // Where crash_log.txt goes when the working directory can't be written
