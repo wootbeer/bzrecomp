@@ -1,6 +1,11 @@
 # Changelog  
   
-## [0.1.1 Beta]  
+## [0.1.2 Beta] - 2026-11-10  
+  
+### Changed  
+- Much lower CPU use: the game no longer keeps a CPU core busy while it waits, for better battery life on handhelds like the Steam Deck  
+  
+## [0.1.1 Beta] - 2026-11-02  
   
 ### Added  
 - Bloom option, the green HUD doesn't glow  
@@ -10,7 +15,6 @@
 - Hacks tab with GameShark codes  
 ### Changed  
 - crash_log.txt now names the cause of more crashes  
-- Much lower CPU use: the game no longer keeps a CPU core busy while it waits, for better battery life on handhelds like the Steam Deck  
   
 ## [0.1.0 Beta] - 2026-10-14  
   
