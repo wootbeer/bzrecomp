@@ -10,6 +10,7 @@
 - Hacks tab with GameShark codes  
 ### Changed  
 - crash_log.txt now names the cause of more crashes  
+- Much lower CPU use: the game no longer keeps a CPU core busy while it waits, for better battery life on handhelds like the Steam Deck  
   
 ## [0.1.0 Beta] - 2026-10-14  
   

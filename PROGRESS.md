@@ -149,6 +149,19 @@ leave the game's own behaviour, look and balance alone.
   build on each other, so a stamp records which are applied (by content) and
   a fingerprint of the patched tree; when either changes, the submodule is
   reset and all of its patches are applied again.
+- **CPU use while waiting** (`src/main/scheduler_workaround.cpp`, after
+  the BattleTanx port's round 188). The main game thread ("Game 50") used a
+  whole core at all times: the per-frame graphics setup (`func_8002B12C`)
+  waits in one of the busy-wait loops hooked by `tools/scan_spin_loops.py`,
+  and the hook (`bz_yield_via_priority_drop`) drained the external messages,
+  handed off and returned at once, so the loop called it back to back. Now,
+  once back-to-back calls (under 1 ms apart) have gone on for 2 ms, each
+  further call first sleeps until the next external message (at most 1 ms),
+  then drains and hands off as before; shorter runs never sleep. Measured
+  here (`top -H`, Expand, Display rate), the main thread went from 91.6% of
+  a core to 1.4% on the title screen, 90.4% to 2.4% in the attract demo,
+  and 89.0% to 2.2% in the first commander mission; the game boots, goes
+  through its menus and plays the same, with no audio resyncs.
 - **Ground at higher refresh rates.** The main ground builder's grid is now
   built around a fixed anchor instead of the camera (`bz_terrain_begin_anchored`
   in `src/game/terrain_precision.cpp`), so a grid point keeps the same vertex
