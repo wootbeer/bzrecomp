@@ -1,5 +1,13 @@
 # Changelog  
   
+## [Unreleased]  
+  
+### Added  
+- Command line options for almost every setting, the cheats and the hacks (`--help` lists them)  
+- `--play` to skip the launcher and start the game, `--rom` to pick the ROM  
+### Changed  
+- New installs keep their settings and saves in the game's folder (portable). Existing settings are left where they are  
+  
 ## [0.1.2 Beta] - 2026-11-10  
   
 ### Changed  

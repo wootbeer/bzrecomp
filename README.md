@@ -19,10 +19,21 @@ CDD1D1DEC9763CE6B7B1A70668EFFCEAD0A185A0 (.n64)
 85B4FEBBE6FBD1ECFC883905E43E68E7188C44F9 (.z64)  
 Place in an accessible folder onto your device.  
   
-Add a blank portable.txt in the application's folder to make portable if you want to save settings locally.  
+New installs are portable: settings and saves go in the game's own folder (it makes a portable.txt there). If you already have settings from an earlier version, they stay where they are; add a blank portable.txt to the game's folder yourself to switch to portable, or delete it to go back.  
+
+## Command Line  
+Almost every setting can be given on the command line (or in a shortcut, or in Steam's launch options). They last for that launch only, unless `--save-settings` is added. Run with `--help` for the full list.  
+
+- `--play` skips the launcher and starts the game  
+- `--rom "path to the ROM"` uses that ROM, like Select ROM in the launcher  
+- `--fullscreen` or `--windowed`  
+- Any setting: `--setting value`, for example `--screen-filter crt`, `--bloom high`, `--aspect-ratio original`, `--resolution original2x`, `--volume 50`  
+- On/off settings (and the cheats and hacks): `--infinite-ammo`, `--infinite-ammo off` or `--no-infinite-ammo`  
+
+For example: `BattlezoneRecompiled.exe --play --fullscreen --screen-filter crt`  
   
 ## Linux and Steam Deck  
-Download the Linux build and run BattlezoneRecompiled-x86_64.AppImage (make it executable first if needed). Settings and saves go in ~/.config/bzrecomp.  
+Download the Linux build and run BattlezoneRecompiled-x86_64.AppImage (make it executable first if needed). Settings and saves go in ~/.config/bzrecomp (the AppImage can't be portable).  
   
 On Steam Deck, in Desktop Mode, add the AppImage to Steam with "Add a Non-Steam Game", then play it from Gaming Mode.  
   

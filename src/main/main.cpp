@@ -50,6 +50,7 @@
 #include "librecomp/helpers.hpp"
 
 #include "bz_cheats.h"
+#include "bz_cli.h"
 #include "bz_config.h"
 #include "bz_widescreen.h"
 
@@ -468,6 +469,7 @@ int main(int argc, char** argv) {
     // loaded.
     recompui::register_primary_font("Exo2.ttf", "Exo 2");
 
+    bz::cli::make_portable_by_default();
     recomp::register_config_path(recompui::file::get_app_folder_path());
     bz_crash_set_fallback_folder(recompui::file::get_app_folder_path().string().c_str());
 
@@ -494,6 +496,21 @@ int main(int argc, char** argv) {
     recompui::config::create_mods_tab();
     bz::cheats::add_cheats_tabs();
     recompui::config::finalize();
+
+    // The command line (--help lists it). Read after the settings load, so
+    // what's given here wins for this launch.
+    std::vector<std::string> start_args;
+    if (!bz::cli::apply(argc, argv, start_args)) {
+        NFD_Quit();
+        fflush(stdout);
+        fflush(stderr);
+        std::_Exit(EXIT_SUCCESS);
+    }
+    std::vector<char*> start_argv;
+    for (std::string& arg : start_args) {
+        start_argv.push_back(arg.data());
+    }
+    start_argv.push_back(nullptr);
 
     // Read from the just-loaded config; takes effect on the next launch if
     // changed in the menu.
@@ -548,8 +565,8 @@ int main(int argc, char** argv) {
     // register_launcher_init_callback call here (see file-level comment).
 
     recomp::start({
-        .argc = argc,
-        .argv = argv,
+        .argc = (int)start_args.size(),
+        .argv = start_argv.data(),
         .project_version = project_version,
         .window_handle = {}, // created by gfx_callbacks.create_window
         .rsp_callbacks = rsp_callbacks,

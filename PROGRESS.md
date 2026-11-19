@@ -162,6 +162,20 @@ leave the game's own behaviour, look and balance alone.
   a core to 1.4% on the title screen, 90.4% to 2.4% in the attract demo,
   and 89.0% to 2.2% in the first commander mission; the game boots, goes
   through its menus and plays the same, with no audio resyncs.
+- **Portable by default and the command line** (`src/main/cli.cpp`).
+  Before the settings folder is registered, `portable.txt` is made in the
+  game's folder when the game was started from its own folder, isn't an
+  AppImage, and has no settings in the usual place yet (an existing player's
+  `%LOCALAPPDATA%\bzrecomp` or `~/.config/bzrecomp` keeps being used). After
+  `recompui::config::finalize()` the command line is read: every visible
+  option of the General, Graphics, Sound, Cheats and Hacks tabs by its id with
+  dashes (plainer names for the graphics ids and the volume), checked against
+  the option's values; `--rom` (`recomp::select_rom`, the wide path on
+  Windows), `--play` (passed on as the runtime's `--game bz`),
+  `--save-settings` and `--help` (made from the schemas; shown in a message
+  box too, since the Windows Release build has no console). Graphics changes
+  go to `ultramodern::renderer::set_graphics_config` as the tab's own apply
+  does. A mistake shows what was wrong and quits.
 - **Ground at higher refresh rates.** The main ground builder's grid is now
   built around a fixed anchor instead of the camera (`bz_terrain_begin_anchored`
   in `src/game/terrain_precision.cpp`), so a grid point keeps the same vertex
